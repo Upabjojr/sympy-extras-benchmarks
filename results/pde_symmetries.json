@@ -1,0 +1,113 @@
+{
+ "mismatches": 0,
+ "results": [
+  {
+   "name": "heat u_t = u_xx",
+   "degree": 3,
+   "found": 6,
+   "expected": 6,
+   "verified": true,
+   "status": "ok",
+   "time": 0.61
+  },
+  {
+   "name": "Burgers u_t + u u_x = u_xx",
+   "degree": 2,
+   "found": 5,
+   "expected": 5,
+   "verified": true,
+   "status": "ok",
+   "time": 0.25
+  },
+  {
+   "name": "KdV u_t + u u_x + u_xxx = 0",
+   "degree": 2,
+   "found": 4,
+   "expected": 4,
+   "verified": true,
+   "status": "ok",
+   "time": 0.48
+  },
+  {
+   "name": "wave u_tt = u_xx",
+   "degree": 2,
+   "found": 7,
+   "expected": 7,
+   "verified": true,
+   "status": "ok",
+   "time": 0.23
+  },
+  {
+   "name": "nonlinear diffusion u_t = (u^m u_x)_x",
+   "degree": 2,
+   "found": 4,
+   "expected": 4,
+   "verified": true,
+   "status": "ok",
+   "time": 0.7
+  },
+  {
+   "name": "nonlinear diffusion m = -4/3",
+   "degree": 2,
+   "found": 5,
+   "expected": 5,
+   "verified": true,
+   "status": "ok",
+   "time": 0.28
+  },
+  {
+   "name": "Fisher u_t = u_xx + u(1 - u)",
+   "degree": 2,
+   "found": 2,
+   "expected": 2,
+   "verified": true,
+   "status": "ok",
+   "time": 0.28
+  },
+  {
+   "name": "Boussinesq u_tt + u u_xx + u_x^2 + u_xxxx = 0",
+   "degree": 2,
+   "found": 3,
+   "expected": 3,
+   "verified": true,
+   "status": "ok",
+   "time": 1.1
+  },
+  {
+   "name": "Liouville u_xt = exp(u)",
+   "degree": 2,
+   "found": 6,
+   "expected": 6,
+   "verified": true,
+   "status": "ok",
+   "time": 0.19
+  },
+  {
+   "name": "sine-Gordon u_xt = sin(u)",
+   "degree": 2,
+   "found": 3,
+   "expected": 3,
+   "verified": true,
+   "status": "ok",
+   "time": 0.2
+  },
+  {
+   "name": "potential Burgers u_t = u_xx + u_x^2",
+   "degree": 3,
+   "found": 6,
+   "expected": 6,
+   "verified": true,
+   "status": "ok",
+   "time": 0.81
+  },
+  {
+   "name": "Black-Scholes-type u_t + x^2 u_xx/2 = 0",
+   "degree": 2,
+   "found": 5,
+   "expected": 5,
+   "verified": true,
+   "status": "ok",
+   "time": 0.66
+  }
+ ]
+}

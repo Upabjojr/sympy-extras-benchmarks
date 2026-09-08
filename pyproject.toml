@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sympy-extras-benchmarks"
+version = "0.1.0"
+description = "Benchmark datasets and drivers for sympy-extras: parsers for external collections and the translated tables"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Francesco Bonazzi"},
+]
+requires-python = ">=3.9"
+dependencies = [
+    "sympy>=1.14",
+    "sympy-extras",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+dev = [
+    "pytest",
+    "mypy>=1.14",
+    "pyflakes",
+]
+
+[project.scripts]
+sympy-extras-benchmarks = "sympy_extras_benchmarks.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/Upabjojr/sympy-extras-benchmarks"
+Repository = "https://github.com/Upabjojr/sympy-extras-benchmarks"
+Library = "https://github.com/Upabjojr/sympy-extras"
+
+[tool.setuptools.packages.find]
+include = ["sympy_extras_benchmarks*"]
+
+[tool.pytest.ini_options]
+testpaths = ["sympy_extras_benchmarks"]
+addopts = "--doctest-modules -p no:cacheprovider"
+
+[tool.mypy]
+python_version = "3.10"
+files = ["sympy_extras_benchmarks", "conftest.py"]
+strict = true
+# SymPy 1.14 ships no py.typed and few annotations (see the same setting in
+# sympy-extras): calls into unannotated SymPy functions cannot be flagged.
+disallow_untyped_calls = false
+warn_return_any = false
+disallow_subclassing_any = false
+warn_unused_ignores = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = ["sympy", "sympy.*"]
+follow_untyped_imports = true
+
+[[tool.mypy.overrides]]
+module = ["mpmath", "mpmath.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# the tests compare SymPy numbers with Python literals on purpose
+module = ["sympy_extras_benchmarks.*.tests.*"]
+strict_equality = false

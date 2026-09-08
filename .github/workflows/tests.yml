@@ -1,0 +1,46 @@
+name: Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "git+https://github.com/Upabjojr/sympy-extras"
+          python -m pip install -e ".[test]"
+      - name: Run the parser tests and doctests (no network)
+        run: python -m pytest
+
+  typecheck:
+    name: mypy and pyflakes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "git+https://github.com/Upabjojr/sympy-extras"
+          python -m pip install -e ".[dev]"
+      - name: mypy
+        run: python -m mypy
+      - name: pyflakes
+        run: python -m pyflakes sympy_extras_benchmarks conftest.py
