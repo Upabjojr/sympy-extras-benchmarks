@@ -26,11 +26,19 @@ Every entry of a test file has the form ::
 
 Only the equation ``eqn`` (a mathematical fact from the books) and the
 one-word classification of the method are read; Maxima's solutions and
-code are not used, and nothing of the GPL-licensed files is stored in this
-repository: they are cloned on first use into the cache directory (a
-sparse checkout of Maxima's git repository on SourceForge, or the files of
-the GitHub mirror), or read from a local Maxima installation named by
-``$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS``.
+code are not used.
+
+Source and licence
+==================
+
+Maxima is distributed under the **GNU General Public License, version 2**.
+Nothing of its files is stored in this repository: they are cloned on
+first use into the cache directory (a sparse checkout of Maxima's git
+repository on SourceForge, or the files of the GitHub mirror), or read
+from a local Maxima installation named by
+``$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS``. Only the equations — facts from
+Kamke's and Murphy's books — and the one-word method classification are
+read.
 
 The parser
 ==========
@@ -83,10 +91,13 @@ __all__ = ['ODEEntry', 'COLLECTIONS', 'FILES', 'fetch', 'load', 'parse_equation'
 #: Maxima's git repository (SourceForge) and the directory of the tests
 REPOSITORY = "https://git.code.sf.net/p/maxima/code"
 SUBDIRECTORY = "share/contrib/diffequations/tests"
+#: Maxima's own regression tests, read by
+#: :mod:`~sympy_extras_benchmarks.datasets.polynomial_solving`
+TESTS_SUBDIRECTORY = "tests"
 #: the raw files of the GitHub mirror and of SourceForge's browser, as fallbacks
 MIRRORS = (
-    "https://raw.githubusercontent.com/calyau/maxima/master/" + SUBDIRECTORY + "/%s.mac",
-    "https://sourceforge.net/p/maxima/code/ci/master/tree/" + SUBDIRECTORY + "/%s.mac?format=raw",
+    "https://raw.githubusercontent.com/calyau/maxima/master/%s/%s.mac",
+    "https://sourceforge.net/p/maxima/code/ci/master/tree/%s/%s.mac?format=raw",
 )
 #: a local directory with the ``.mac`` files (a Maxima installation)
 ENVIRONMENT_VARIABLE = 'SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS'
@@ -622,53 +633,60 @@ def _local_directory() -> Optional[pathlib.Path]:
     return None
 
 
-def _clone(target: pathlib.Path) -> bool:
-    """A sparse checkout of the tests directory of Maxima's repository."""
-    if (target / SUBDIRECTORY).is_dir():
+def _clone(target: pathlib.Path, subdirectory: str = SUBDIRECTORY) -> bool:
+    """A sparse checkout of the test directories of Maxima's repository."""
+    if (target / subdirectory).is_dir():
         return True
     try:
-        subprocess.run(['git', 'clone', '--depth', '1', '--filter=blob:none', '--sparse',
-                        REPOSITORY, str(target)], check=True, capture_output=True, timeout=900)
-        subprocess.run(['git', '-C', str(target), 'sparse-checkout', 'set', SUBDIRECTORY],
+        if not (target / '.git').is_dir():
+            subprocess.run(['git', 'clone', '--depth', '1', '--filter=blob:none', '--sparse',
+                            REPOSITORY, str(target)], check=True, capture_output=True, timeout=900)
+        subprocess.run(['git', '-C', str(target), 'sparse-checkout', 'set',
+                        SUBDIRECTORY, TESTS_SUBDIRECTORY],
                        check=True, capture_output=True, timeout=900)
     except (subprocess.SubprocessError, OSError):
         return False
-    return (target / SUBDIRECTORY).is_dir()
+    return (target / subdirectory).is_dir()
 
 
-def _download(name: str, target: pathlib.Path) -> Optional[str]:
+def _download(name: str, target: pathlib.Path, subdirectory: str = SUBDIRECTORY) -> Optional[str]:
     for pattern in MIRRORS:
         try:
-            with urllib.request.urlopen(pattern % name, timeout=60) as response:
+            with urllib.request.urlopen(pattern % (subdirectory, name), timeout=60) as response:
                 text = response.read().decode('utf-8', errors='replace')
         except OSError:
             continue
-        if 'contrib_ode' in text or 'ode' in text[:2000]:
+        # a mirror answers a missing file with a web page, not Maxima source
+        if '<html' not in text[:400].lower():
             target.write_text(text)
             return text
     return None
 
 
-def fetch(name: str) -> Optional[str]:
+def fetch(name: str, subdirectory: str = SUBDIRECTORY) -> Optional[str]:
     """The text of the test file ``name`` (without extension): from the
     directory named by ``$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS``, from the
     cache, from a sparse clone of Maxima's repository, or from the mirrors;
-    ``None`` when none of them is reachable."""
+    ``None`` when none of them is reachable.
+
+    ``subdirectory`` is where in the repository to look: the collections
+    live under :data:`SUBDIRECTORY`, Maxima's own regression files under
+    :data:`TESTS_SUBDIRECTORY`."""
     local = _local_directory()
     if local is not None and (local / (name + '.mac')).is_file():
         return (local / (name + '.mac')).read_text(errors='replace')
     cache = cache_directory() / 'maxima'
     cache.mkdir(parents=True, exist_ok=True)
     clone = cache / 'repository'
-    path = clone / SUBDIRECTORY / (name + '.mac')
+    path = clone / subdirectory / (name + '.mac')
     if path.is_file():
         return path.read_text(errors='replace')
     copy = cache / (name + '.mac')
     if copy.is_file():
         return copy.read_text(errors='replace')
-    if _clone(clone) and path.is_file():
+    if _clone(clone, subdirectory) and path.is_file():
         return path.read_text(errors='replace')
-    return _download(name, copy)
+    return _download(name, copy, subdirectory)
 
 
 def load(collections: Sequence[str] = ('kamke1', 'kamke2'),
