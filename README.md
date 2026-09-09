@@ -91,6 +91,7 @@ python -m sympy_extras_benchmarks polynomial_systems
 python -m sympy_extras_benchmarks solve_random --cases 150
 python -m sympy_extras_benchmarks verify_random --sample 24 --seed 7 --timeout 15
 python -m sympy_extras_benchmarks logic_random --cases 80 --seed 3
+python -m sympy_extras_benchmarks presburger_random --cases 400 --seed 3
 ```
 
 | Driver | Data | Checks |
@@ -108,6 +109,7 @@ python -m sympy_extras_benchmarks logic_random --cases 80 --seed 3
 | `polynomial_systems` | Katsura and cyclic systems | `Ideal.dimension`, `vector_space_dimension`, `is_radical` against the known values; FGLM against the Gröbner walk |
 | `solve_random` | random polynomial equations with sign assumptions; with `--transcendental N`, random equations in `exp`, `log`, `sin`, `cos`, `sqrt` | `solve` against `Poly.real_roots` or against sign changes on a fine grid refined with `nsolve` |
 | `verify_random` | a random sample of the collections | `solve_ode`; every solution verified with `checkodesol` and numerically; a solution failing the numerical check is `WRONG` |
+| `presburger_random` | random linear formulas over ℤ — disjunctions of conjunctions of `=`, `!=`, `<=`, `<` | `resolve` against three oracles that each decide on their own: brute force over a box (one-sided both ways, so a disagreement is always the procedure's), the ∀/¬∃ duality (an internal contradiction, no outside oracle) and the real relaxation. **This is the driver that found #51 and the one to run against a fix** |
 | `logic_random` | random Boolean combinations of polynomial relations with random assumptions | `simplify`, `refine`, `ask`, `satisfiable` against evaluation at random points; the CAD decides the equivalence for one variable |
 
 A driver exits with status 1 only when a wrong result was found; failures

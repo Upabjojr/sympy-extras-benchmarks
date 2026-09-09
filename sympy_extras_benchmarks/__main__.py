@@ -16,6 +16,7 @@ DRIVERS: dict[str, str] = {
     'solve_random': "solve with assumptions on random polynomial and transcendental equations",
     'verify_random': "solve_ode on a random sample of the collections, verified numerically",
     'logic_random': "simplify, refine, ask, satisfiable on random Boolean combinations of relations",
+    'presburger_random': "resolve over the integers on random linear formulas, against brute force over a box",
     'solver_regressions': "satisfiable and resolve on the arithmetic problems of the cvc5 and Z3 regression suites",
     'lean_tactics': "resolve on the arithmetic tactic tests (linarith, positivity) of Lean's mathlib4",
     'coq_micromega': "resolve on the micromega test suite (lia, nia, psatz) of the Rocq/Coq standard library",
