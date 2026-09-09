@@ -23,6 +23,8 @@ sympy_extras_benchmarks/
                              read an *unevaluated* parse because SymPy settles arithmetic as it reads)
         lean_tactics.py      the linarith/positivity tests of Lean's mathlib4
         coq_micromega.py     the lia/nia/psatz tests of the Rocq/Coq standard library
+        tptp_arithmetic.py   the ARI domain of the TPTP problem library (TFF parser)
+        reduce_odes.py       the Postel-Zimmermann ODEs, from REDUCE's ODESolve tests
         pde_symmetries.py    12 classical PDEs with the dimension of their symmetry algebra
         polynomial_systems.py  Katsura and cyclic systems with their invariants
         polynomial_solving.py  systems of polynomial equations: Maxima's algsys regression file
@@ -51,6 +53,8 @@ results/                     runs written by --output, ignored by git
   | Z3 regressions (`solver_regressions`) | `Z3Prover/z3test` | MIT | — |
   | mathlib4 tactic tests (`lean_tactics`) | `leanprover-community/mathlib4` | Apache-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MATHLIB` |
   | Rocq micromega tests (`coq_micromega`) | `rocq-prover/stdlib` | LGPL-2.1 | `$SYMPY_EXTRAS_BENCHMARKS_ROCQ_STDLIB` |
+  | TPTP `ARI` domain (`tptp_arithmetic`) | tptp.org, official distribution | TPTP's own terms; problems credited in their headers | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |
+  | Postel-Zimmermann ODEs (`reduce_odes`) | `reduce-algebra/reduce-algebra` | Reduce License (BSD 2-clause style) | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
 
   Only the mathematical content is read: the equations of Kamke's and
   Murphy's books, the formulas and the `:status` of the SMT-LIB problems,

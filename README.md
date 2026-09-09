@@ -27,6 +27,8 @@ repository (see [Results](#results)).
 | `lean_tactics` | The tactic tests of Lean's **mathlib4** for arithmetic (`linarith`, `positivity`), polynomial identities (`linear_combination`, `ring`) and numeral evaluation (`norm_num`), each with a machine-checked proof | Lean 4 `example` blocks, parsed to SymPy formulas by the grammar of `prover_syntax`; sparse clone of `leanprover-community/mathlib4` on GitHub | 13 files, 1573 examples, 443 usable goals of which 323 are not settled by SymPy's own evaluation |
 | `coq_micromega` | The **micromega** test suite of the Rocq/Coq standard library (`lia`, `nia`, `lra`, `psatz`): mostly nonlinear goals over `Z`, `Q`, `R` and `nat`, one file per historical bug, each closed by `Qed` | Rocq `Lemma`/`Goal` statements, parsed to SymPy formulas by the grammar of `prover_syntax`; sparse clone of `rocq-prover/stdlib` on GitHub | 38 files, 285 statements, 119 usable goals (none of them trivial), 105 over the integers |
 | `polynomial_solving` | The systems of Maxima's `algsys` regression file (`tests/rtest_algsys.mac`): the examples of Beyer (1984) and Morgan (1983), plus the ones that later broke `algsys` — positive-dimensional components, solutions real in the paper and complex in fact, and one where the published answer is wrong | Maxima `.mac`, read with the expression parser of `maxima_ode`; the recorded solutions are counted but are not the answer key | 51 systems, 1 to 13 equations, 1 to 6 unknowns |
+| `tptp_arithmetic` | The arithmetic (`ARI`) domain of the **TPTP** problem library: several hundred TFF problems over `$int` and `$real`, each with the `Status` its authors recorded. Written to be hard for provers rather than to exercise a tactic | TFF, parsed by a recursive descent parser for the arithmetic fragment; `Problems/ARI` extracted from the official distribution | 700 problems, 189 usable (179 `Theorem`, 10 `CounterSatisfiable`), 122 over the integers |
+| `reduce_odes` | The ODE test suite of **REDUCE**'s `ODESolve`, whose core is the **Postel–Zimmermann** collection — the equations of their 1996 review of the ODE solvers of seven computer algebra systems, chosen to tell systems apart | REDUCE `.tst`, rewritten into Maxima syntax (implicit multiplication, bracketless calls, `df`) and read with the parser of `maxima_ode` | 6 files, 233 `odesolve` calls, 88 usable equations of order 1 to 7 |
 | `pde_symmetries` | Twelve classical PDEs (heat, Burgers, KdV, wave, nonlinear diffusion, Fisher, Boussinesq, Liouville, sine-Gordon, potential Burgers, Black-Scholes) with the dimension of their point symmetry algebra from Olver, Bluman-Kumei and Ibragimov's handbook | translated into SymPy expressions | 12 equations |
 | `polynomial_systems` | The Katsura-m and cyclic-m systems with their known invariants (dimension, number of solutions, radicality) | generated as SymPy expressions | Katsura 2-6, cyclic 3-7 |
 
@@ -82,6 +84,8 @@ python -m sympy_extras_benchmarks solver_regressions --sample 100 --domain integ
 python -m sympy_extras_benchmarks lean_tactics --non-trivial \
     --wolfram "ssh mathematica-host 'cat > /tmp/oracle.wl && wolframscript -file /tmp/oracle.wl'"
 python -m sympy_extras_benchmarks coq_micromega --domain integers --timeout 25
+python -m sympy_extras_benchmarks tptp_arithmetic --timeout 20
+python -m sympy_extras_benchmarks reduce_odes --timeout 20
 python -m sympy_extras_benchmarks polynomial_solving --timeout 30
 python -m sympy_extras_benchmarks polynomial_systems
 python -m sympy_extras_benchmarks solve_random --cases 150
@@ -98,6 +102,8 @@ python -m sympy_extras_benchmarks logic_random --cases 80 --seed 3
 | `solver_regressions` | the arithmetic problems of the cvc5 and Z3 regression suites | `satisfiable` (quantifier-free) or `resolve` (quantified) over the reals or the integers, against the recorded answer; with `--wolfram COMMAND` also against Mathematica, which makes a disagreement between the two an independent finding |
 | `lean_tactics` | the `linarith`/`positivity` tests of mathlib4 | `resolve` on each closed goal against mathlib's verdict (`True` for a proved implication, `False` for contradictory hypotheses); the rationals are decided over the reals, so a disagreement with the suite that Mathematica confirms is reported as `SUSPECT` and only a disagreement with Mathematica is a finding |
 | `coq_micromega` | the `lia`/`nia`/`psatz` tests of the Rocq standard library | the same, on the nonlinear half: Positivstellensatz examples, products of hypotheses and high powers over `Z`. Statements left `Abort`ed or `Admitted` are not read — they record that the tactic gives up, not that the goal is false |
+| `tptp_arithmetic` | the TPTP `ARI` domain | `resolve` on each closed problem against the recorded `Status`; the `$rat` problems are refused, since deciding them over ℝ changes the question |
+| `reduce_odes` | the Postel–Zimmermann ODE collection | `solve_ode`, every solution verified with `checkodesol` and numerically; a solution whose residual does not vanish is `WRONG` |
 | `polynomial_solving` | the systems of Maxima's `algsys` regression file | `solve` over the complexes; **every solution substituted back**, which is the hard check and the only one that counts as wrong; the number of solutions is compared with Mathematica's `Solve` and with the count Maxima records, and reported but not counted |
 | `polynomial_systems` | Katsura and cyclic systems | `Ideal.dimension`, `vector_space_dimension`, `is_radical` against the known values; FGLM against the Gröbner walk |
 | `solve_random` | random polynomial equations with sign assumptions; with `--transcendental N`, random equations in `exp`, `log`, `sin`, `cos`, `sqrt` | `solve` against `Poly.real_roots` or against sign changes on a fine grid refined with `nsolve` |
@@ -142,6 +148,8 @@ be pointed to with the environment variable in the last column.
 |---|---|---|---|---|
 | Maxima `contrib_ode` tests — the Kamke and Murphy collections | [`git.code.sf.net/p/maxima/code`](https://git.code.sf.net/p/maxima/code), mirror [`calyau/maxima`](https://github.com/calyau/maxima) | GPL-2.0 (`COPYING`) | the equations and the one-word method classification. **Maxima's solutions and code are not used** | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
 | Maxima `tests/rtest_algsys.mac` — the `algsys` regression file | as above | GPL-2.0 | the systems and the unknowns; the recorded solutions are *counted* as a third opinion and are not the answer key | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
+| TPTP `ARI` domain | [tptp.org](https://tptp.org) | distributed by Geoff Sutcliffe under TPTP's own terms; each problem is the work of the authors named in its header | the formulas and the recorded `Status` | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |
+| REDUCE `ODESolve` tests — the Postel–Zimmermann collection | [`reduce-algebra/reduce-algebra`](https://github.com/reduce-algebra/reduce-algebra) | *Reduce License*, a BSD 2-clause style licence (`LICENSE`) | the equations only. **REDUCE's solutions and code are not used** | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
 | SMT-LIB `QF_NRA` — the Meti-Tarski family | [`dreal/benchmarks`](https://github.com/dreal/benchmarks) (a mirror) | no license file in the mirror; the SMT-LIB benchmarks carry their own terms | the formulas and the `:status` | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB` |
 | cvc5 regression suite | [`cvc5/cvc5`](https://github.com/cvc5/cvc5) | modified BSD (`COPYING`; the GPL notice there is about optional link-time dependencies, not the test files) | the formulas and the recorded `sat`/`unsat` | — |
 | Z3 regression suite | [`Z3Prover/z3test`](https://github.com/Z3Prover/z3test) | MIT (`LICENSE.txt`, Microsoft Corporation) | the formulas and the recorded status | — |
@@ -168,7 +176,6 @@ Recorded so the ground is not covered twice:
 |---|---|---|
 | [`vprover/vampire`](https://github.com/vprover/vampire) | BSD-3-Clause / "Vampire licence" | ships 9 TPTP `ARI` problems; `checks/theory` tests `let` and tuple parsing, not arithmetic |
 | [`rocq-prover/rocq`](https://github.com/rocq-prover/rocq) | LGPL-2.1 | the micromega tests are no longer there; they live in `rocq-prover/stdlib`, which is what is read |
-| TPTP `ARI` domain | TPTP's own terms | worth doing, but needs a TFF parser and the full distribution |
 | Goedel-Prover / miniF2F / ProofNet | MIT (miniF2F), Apache-2.0 (Goedel-Prover) | olympiad and undergraduate problems, almost none in a decidable arithmetic fragment |
 | mathlib4 `FieldSimp.lean` | Apache-2.0 | its goals are `P (expr)` assertions about mathlib's normal form, not truth claims |
 
