@@ -29,6 +29,7 @@ repository (see [Results](#results)).
 | `polynomial_solving` | The systems of Maxima's `algsys` regression file (`tests/rtest_algsys.mac`): the examples of Beyer (1984) and Morgan (1983), plus the ones that later broke `algsys` — positive-dimensional components, solutions real in the paper and complex in fact, and one where the published answer is wrong | Maxima `.mac`, read with the expression parser of `maxima_ode`; the recorded solutions are counted but are not the answer key | 51 systems, 1 to 13 equations, 1 to 6 unknowns |
 | `tptp_arithmetic` | The arithmetic (`ARI`) domain of the **TPTP** problem library: several hundred TFF problems over `$int` and `$real`, each with the `Status` its authors recorded. Written to be hard for provers rather than to exercise a tactic | TFF, parsed by a recursive descent parser for the arithmetic fragment; `Problems/ARI` extracted from the official distribution | 700 problems, 189 usable (179 `Theorem`, 10 `CounterSatisfiable`), 122 over the integers |
 | `reduce_odes` | The ODE test suite of **REDUCE**'s `ODESolve`, whose core is the **Postel–Zimmermann** collection — the equations of their 1996 review of the ODE solvers of seven computer algebra systems, chosen to tell systems apart | REDUCE `.tst`, rewritten into Maxima syntax (implicit multiplication, bracketless calls, `df`) and read with the parser of `maxima_ode` | 6 files, 233 `odesolve` calls, 88 usable equations of order 1 to 7 |
+| `maxima_limits` | Maxima's four limit regression files: the main one (a bug per entry), a larger collection, the examples of **Gruntz's 1996 thesis** — the algorithm modern CAS limits come from — and the limit problems of **Wester's** *Critique of the Mathematical Abilities of CA Systems* | Maxima `.mac`, read with the expression parser of `maxima_ode`; a call while an `assume` is in force is refused, as are `und` and `ind` | 4 files, ~1070 calls, 354 usable limits (300 with a recorded value) |
 | `pde_symmetries` | Twelve classical PDEs (heat, Burgers, KdV, wave, nonlinear diffusion, Fisher, Boussinesq, Liouville, sine-Gordon, potential Burgers, Black-Scholes) with the dimension of their point symmetry algebra from Olver, Bluman-Kumei and Ibragimov's handbook | translated into SymPy expressions | 12 equations |
 | `polynomial_systems` | The Katsura-m and cyclic-m systems with their known invariants (dimension, number of solutions, radicality) | generated as SymPy expressions | Katsura 2-6, cyclic 3-7 |
 
@@ -86,6 +87,8 @@ python -m sympy_extras_benchmarks lean_tactics --non-trivial \
 python -m sympy_extras_benchmarks coq_micromega --domain integers --timeout 25
 python -m sympy_extras_benchmarks tptp_arithmetic --timeout 20
 python -m sympy_extras_benchmarks reduce_odes --timeout 20
+python -m sympy_extras_benchmarks maxima_limits --timeout 15 \
+    --wolfram "ssh mathematica-host 'cat > /tmp/oracle.wl && wolframscript -file /tmp/oracle.wl'"
 python -m sympy_extras_benchmarks polynomial_solving --timeout 30
 python -m sympy_extras_benchmarks polynomial_systems
 python -m sympy_extras_benchmarks solve_random --cases 150
@@ -105,6 +108,7 @@ python -m sympy_extras_benchmarks presburger_random --cases 400 --seed 3
 | `coq_micromega` | the `lia`/`nia`/`psatz` tests of the Rocq standard library | the same, on the nonlinear half: Positivstellensatz examples, products of hypotheses and high powers over `Z`. Statements left `Abort`ed or `Admitted` are not read — they record that the tactic gives up, not that the goal is false |
 | `tptp_arithmetic` | the TPTP `ARI` domain | `resolve` on each closed problem against the recorded `Status`; the `$rat` problems are refused, since deciding them over ℝ changes the question |
 | `reduce_odes` | the Postel–Zimmermann ODE collection | `solve_ode`, every solution verified with `checkodesol` and numerically; a solution whose residual does not vanish is `WRONG` |
+| `maxima_limits` | Maxima's limit regression files | `limit` against Maxima's recorded value **and** Mathematica. Neither is an answer key — Maxima's limit code has its own bugs — so a `DIFFER` means sympy-extras and Mathematica disagree, and a `SUSPECT` means those two agree against Maxima. This is the driver that found #52 |
 | `polynomial_solving` | the systems of Maxima's `algsys` regression file | `solve` over the complexes; **every solution substituted back**, which is the hard check and the only one that counts as wrong; the number of solutions is compared with Mathematica's `Solve` and with the count Maxima records, and reported but not counted |
 | `polynomial_systems` | Katsura and cyclic systems | `Ideal.dimension`, `vector_space_dimension`, `is_radical` against the known values; FGLM against the Gröbner walk |
 | `solve_random` | random polynomial equations with sign assumptions; with `--transcendental N`, random equations in `exp`, `log`, `sin`, `cos`, `sqrt` | `solve` against `Poly.real_roots` or against sign changes on a fine grid refined with `nsolve` |
@@ -149,6 +153,7 @@ be pointed to with the environment variable in the last column.
 | Source | Upstream | License (as published there) | What is read | Local override |
 |---|---|---|---|---|
 | Maxima `contrib_ode` tests — the Kamke and Murphy collections | [`git.code.sf.net/p/maxima/code`](https://git.code.sf.net/p/maxima/code), mirror [`calyau/maxima`](https://github.com/calyau/maxima) | GPL-2.0 (`COPYING`) | the equations and the one-word method classification. **Maxima's solutions and code are not used** | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
+| Maxima `tests/rtest_limit*.mac` — the limit regression files | as above | GPL-2.0 | the calls and the recorded values, the latter as a third opinion only | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
 | Maxima `tests/rtest_algsys.mac` — the `algsys` regression file | as above | GPL-2.0 | the systems and the unknowns; the recorded solutions are *counted* as a third opinion and are not the answer key | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
 | TPTP `ARI` domain | [tptp.org](https://tptp.org) | distributed by Geoff Sutcliffe under TPTP's own terms; each problem is the work of the authors named in its header | the formulas and the recorded `Status` | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |
 | REDUCE `ODESolve` tests — the Postel–Zimmermann collection | [`reduce-algebra/reduce-algebra`](https://github.com/reduce-algebra/reduce-algebra) | *Reduce License*, a BSD 2-clause style licence (`LICENSE`) | the equations only. **REDUCE's solutions and code are not used** | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |

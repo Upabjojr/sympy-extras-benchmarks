@@ -58,6 +58,25 @@ class WolframError(RuntimeError):
     """The oracle could not be reached, or answered something unusable."""
 
 
+#: the elementary functions, spelled as Mathematica spells them. A
+#: function absent here is refused rather than guessed at: a wrong
+#: spelling would make the oracle answer a different question.
+FUNCTIONS: dict[str, str] = {
+    'log': 'Log', 'exp': 'Exp', 'sqrt': 'Sqrt',
+    'sin': 'Sin', 'cos': 'Cos', 'tan': 'Tan', 'cot': 'Cot', 'sec': 'Sec', 'csc': 'Csc',
+    'asin': 'ArcSin', 'acos': 'ArcCos', 'atan': 'ArcTan', 'acot': 'ArcCot',
+    'sinh': 'Sinh', 'cosh': 'Cosh', 'tanh': 'Tanh', 'coth': 'Coth',
+    'asinh': 'ArcSinh', 'acosh': 'ArcCosh', 'atanh': 'ArcTanh',
+    'gamma': 'Gamma', 'loggamma': 'LogGamma', 'digamma': 'PolyGamma',
+    'erf': 'Erf', 'erfc': 'Erfc', 'Ei': 'ExpIntegralEi', 'li': 'LogIntegral',
+    'factorial': 'Factorial', 'binomial': 'Binomial', 'zeta': 'Zeta',
+    'floor': 'Floor', 'ceiling': 'Ceiling', 'sign': 'Sign', 're': 'Re', 'im': 'Im',
+    'arg': 'Arg', 'conjugate': 'Conjugate', 'Max': 'Max', 'Min': 'Min',
+    'besselj': 'BesselJ', 'bessely': 'BesselY', 'besseli': 'BesselI', 'besselk': 'BesselK',
+    'harmonic': 'HarmonicNumber', 'polygamma': 'PolyGamma', 'lowergamma': 'Gamma',
+}
+
+
 def _binary(node: Basic, operator: str) -> str:
     return "(" + (" %s " % operator).join(to_wolfram(a) for a in node.args) + ")"
 
@@ -70,8 +89,32 @@ def to_wolfram(node: Basic) -> str:
     connectives, ``Mod``, ``Abs`` and the quantifiers of sympy-extras.
     Anything else raises :class:`WolframError`.
     """
-    from sympy import (Abs, Add, And, Eq, Ge, Gt, Implies, Le, Lt, Mod, Mul, Ne, Not, Or, Pow, Xor)
+    from sympy import (Abs, Add, And, Eq, Ge, Gt, Implies, Le, Lt, Mod, Mul, Ne, Not, Or, Pow,
+                       Xor, atan2, nan, oo, pi, zoo)
+    from sympy.core.numbers import Exp1, ImaginaryUnit, NegativeInfinity
     from sympy.logic.boolalg import BooleanFalse, BooleanTrue, Equivalent
+    from sympy.core.function import AppliedUndef
+    if node is oo:
+        return "Infinity"
+    if isinstance(node, NegativeInfinity):
+        return "-Infinity"
+    if node is zoo:
+        return "ComplexInfinity"
+    if node is nan:
+        return "Indeterminate"
+    if node is pi:
+        return "Pi"
+    if isinstance(node, Exp1):
+        return "E"
+    if isinstance(node, ImaginaryUnit):
+        return "I"
+    if isinstance(node, atan2):
+        # Mathematica takes the arguments the other way round:
+        # ArcTan[x, y] is the angle of (x, y), i.e. atan2(y, x)
+        return "ArcTan[%s, %s]" % (to_wolfram(node.args[1]), to_wolfram(node.args[0]))
+    name = FUNCTIONS.get(type(node).__name__)
+    if name is not None and not isinstance(node, AppliedUndef):
+        return "%s[%s]" % (name, ", ".join(to_wolfram(a) for a in node.args))
     if isinstance(node, BooleanTrue):
         return "True"
     if isinstance(node, BooleanFalse):

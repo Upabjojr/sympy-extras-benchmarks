@@ -28,6 +28,7 @@ sympy_extras_benchmarks/
         pde_symmetries.py    12 classical PDEs with the dimension of their symmetry algebra
         polynomial_systems.py  Katsura and cyclic systems with their invariants
         polynomial_solving.py  systems of polynomial equations: Maxima's algsys regression file
+        maxima_limits.py     limits: Maxima's four regression files, Gruntz and Wester included
         tests/               parser tests on inline samples (no network, fast)
     oracles/                 independent oracles a driver can check against
         wolfram.py           Mathematica behind a command given with --wolfram
@@ -48,6 +49,7 @@ results/                     runs written by --output, ignored by git
   |---|---|---|---|
   | Kamke/Murphy collections (`maxima_ode`) | Maxima, SourceForge git, mirror `calyau/maxima` | GPL-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
   | `algsys` regression file (`polynomial_solving`) | Maxima, `tests/` | GPL-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
+  | limit regression files (`maxima_limits`) | Maxima, `tests/` | GPL-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
   | Meti-Tarski `QF_NRA` (`smtlib`) | `dreal/benchmarks` (mirror) | no licence file; SMT-LIB's own terms | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB` |
   | cvc5 regressions (`solver_regressions`) | `cvc5/cvc5` | modified BSD | — |
   | Z3 regressions (`solver_regressions`) | `Z3Prover/z3test` | MIT | — |
