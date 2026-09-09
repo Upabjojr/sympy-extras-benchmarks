@@ -13,6 +13,13 @@ Bluman and S. Kumei, *Symmetries and Differential Equations* (1989), and
 N. H. Ibragimov (ed.), *CRC Handbook of Lie Group Analysis of Differential
 Equations*, vol. 1 (1994).
 
+Source and licence
+==================
+
+Nothing is downloaded and nothing is redistributed: these are **published
+results**, which are facts, transcribed with their references above and
+written out as SymPy expressions in this module.
+
 Examples
 ========
 

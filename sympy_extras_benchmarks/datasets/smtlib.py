@@ -44,6 +44,17 @@ Examples
 Problem(demo, unsat, 1 variables)
 >>> problem.formula
 (x > 1) & (x**2 < 0)
+
+
+Source and licence
+==================
+
+The files are fetched on first use into the cache directory from the
+`dreal/benchmarks <https://github.com/dreal/benchmarks>`_ mirror (or read
+from ``$SYMPY_EXTRAS_BENCHMARKS_SMTLIB``); that mirror carries no licence
+file of its own and the SMT-LIB benchmarks keep their own terms. Nothing
+of them is stored in this repository, and only the formulas and the
+recorded ``:status`` are read.
 """
 from __future__ import annotations
 

@@ -1,6 +1,14 @@
 """Standard families of polynomial systems with known invariants: the
 Katsura and cyclic systems.
 
+Source and licence
+==================
+
+Nothing is downloaded and nothing is redistributed, so no upstream licence
+applies: the systems are generated here and their invariants are
+**published results**, which are facts, transcribed with the references
+below.
+
 These are the benchmark families used by the ``test_ideals_known.py``
 tests of sympy-extras (as results, not code), extended to more members.
 The invariants are classical: Katsura-m is zero-dimensional with ``2**m``

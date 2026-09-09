@@ -17,9 +17,18 @@ sympy_extras_benchmarks/
     datasets/
         maxima_ode.py        parser of Maxima's contrib_ode test files: Kamke and Murphy collections
         smtlib.py            SMT-LIB 2 parser (QF_NRA): the Meti-Tarski family
+        solver_regressions.py  SMT-LIB 2 over the integers and with quantifiers: the cvc5 and Z3 regression suites
+        prover_syntax.py     the arithmetic grammar the proof-assistant parsers share, and its refusals
+                             (chained relations, abs, and the guards for total arithmetic, which
+                             read an *unevaluated* parse because SymPy settles arithmetic as it reads)
+        lean_tactics.py      the linarith/positivity tests of Lean's mathlib4
+        coq_micromega.py     the lia/nia/psatz tests of the Rocq/Coq standard library
         pde_symmetries.py    12 classical PDEs with the dimension of their symmetry algebra
         polynomial_systems.py  Katsura and cyclic systems with their invariants
+        polynomial_solving.py  systems of polynomial equations: Maxima's algsys regression file
         tests/               parser tests on inline samples (no network, fast)
+    oracles/                 independent oracles a driver can check against
+        wolfram.py           Mathematica behind a command given with --wolfram
     drivers/                 one module per benchmark, each with main(argv) -> int
     __main__.py              python -m sympy_extras_benchmarks DRIVER [options]
 results/                     runs written by --output, ignored by git
@@ -28,14 +37,31 @@ results/                     runs written by --output, ignored by git
 
 ## Data and licenses
 
-- **Nothing downloaded is committed.** Maxima's test files are GPL and
-  the SMT-LIB files carry their own terms: the parsers fetch them on first
-  use into `.cache/` (or the directory named by
-  `$SYMPY_EXTRAS_BENCHMARKS_CACHE`) and only the mathematical content is
-  read: the equations of Kamke's and Murphy's books, the formulas and the
-  `:status` of the SMT-LIB problems. Maxima's solutions and code are not
-  used. Local copies can be pointed to with
-  `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` and `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB`.
+- **Nothing downloaded is committed.** Every dataset is fetched on first use
+  into `.cache/` (or `$SYMPY_EXTRAS_BENCHMARKS_CACHE`), which is gitignored.
+  The upstream projects and their licences, each read from the licence file
+  in the source tree:
+
+  | Source | Upstream | Licence | Local override |
+  |---|---|---|---|
+  | Kamke/Murphy collections (`maxima_ode`) | Maxima, SourceForge git, mirror `calyau/maxima` | GPL-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
+  | `algsys` regression file (`polynomial_solving`) | Maxima, `tests/` | GPL-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
+  | Meti-Tarski `QF_NRA` (`smtlib`) | `dreal/benchmarks` (mirror) | no licence file; SMT-LIB's own terms | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB` |
+  | cvc5 regressions (`solver_regressions`) | `cvc5/cvc5` | modified BSD | — |
+  | Z3 regressions (`solver_regressions`) | `Z3Prover/z3test` | MIT | — |
+  | mathlib4 tactic tests (`lean_tactics`) | `leanprover-community/mathlib4` | Apache-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MATHLIB` |
+  | Rocq micromega tests (`coq_micromega`) | `rocq-prover/stdlib` | LGPL-2.1 | `$SYMPY_EXTRAS_BENCHMARKS_ROCQ_STDLIB` |
+
+  Only the mathematical content is read: the equations of Kamke's and
+  Murphy's books, the formulas and the `:status` of the SMT-LIB problems,
+  the binders/hypotheses/conclusion of a Lean or Rocq goal. **Maxima's
+  solutions and code are not used, and neither are the assistants'
+  proofs.**
+- **A new dataset must record its source and licence** in the table above
+  and in the `## Sources and licenses` table of `README.md`, together with
+  what is read and what is deliberately not read. A source that is looked
+  at and rejected goes in the "Surveyed and not used" table of `README.md`,
+  with the reason, so that the ground is not covered twice.
 - **Published results are facts and may be transcribed** (the dimension of
   a symmetry algebra, the number of solutions of cyclic-7), with the
   reference in the module docstring. Code of other systems must not be
@@ -44,6 +70,13 @@ results/                     runs written by --output, ignored by git
   written for the test (in the syntax of the format, not copied from the
   files). A dataset which only exists as code is translated into SymPy
   expressions in a module of `datasets/`.
+- **Read only what the suite actually asserts.** Both proof assistants and
+  Maxima record entries that are *not* claims: mathlib marks a goal its
+  tactic should fail on with `#guard_msgs`, an `/-- error -/` docstring,
+  `fail_if_success`, a deliberately false local `axiom` or `test_sorry`;
+  Rocq closes one with `Abort` or `Admitted`; Maxima comments the call out
+  entirely. Reading any of them as an oracle produces a false bug report,
+  so each parser refuses them and says so in its refusal reason.
 
 ## Drivers
 
@@ -54,7 +87,9 @@ results/                     runs written by --output, ignored by git
 - Every call into SymPy or sympy-extras which may not terminate runs under
   `sympy_extras._timeout.attempt` with the `--timeout` of the driver.
 - Results are checked against the recorded answers or an independent
-  oracle, never against the code's own output; a wrong result is reported
+  oracle, never against the code's own output; a driver which can use a
+  second oracle takes it as a command (``--wolfram``) so that no external
+  system is a dependency of this repository; a wrong result is reported
   as `WRONG`/`MISMATCH` and is a bug of sympy-extras (or of the oracle) to
   be fixed there, not worked around here.
 - **Runs are never committed.** A run measures one version of sympy-extras
