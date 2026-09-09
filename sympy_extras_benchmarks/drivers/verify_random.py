@@ -21,17 +21,37 @@ import argparse
 import random
 import sys
 import time
-from typing import Optional, Union
+from typing import Optional, Protocol, Union
 
 
-from sympy import Basic, Derivative, Eq, Expr, Symbol, Rational, Integral, nsolve, diff, N
+from sympy import im, nan, oo, zoo, Basic, Derivative, Eq, Expr, Symbol, Rational, Integral, nsolve, diff, N
 from sympy.solvers.ode import checkodesol
 
 from sympy_extras._timeout import attempt
 from sympy_extras._typing import as_expr
 from sympy_extras.solvers import solve_ode
 
-from sympy_extras_benchmarks.datasets.maxima_ode import ODEEntry, load, x, y
+from sympy_extras_benchmarks.datasets.maxima_ode import load, x, y
+
+__all__ = ['Equation', 'main', 'numeric_check', 'verify', 'x', 'y']
+
+
+class Equation(Protocol):
+    """What :func:`verify` needs of an equation, whichever collection it
+    came from: the Kamke/Murphy entries of
+    :mod:`~sympy_extras_benchmarks.datasets.maxima_ode` and the
+    Postel-Zimmermann ones of
+    :mod:`~sympy_extras_benchmarks.datasets.reduce_odes` both provide it."""
+
+    name: str
+
+    @property
+    def equation(self) -> Expr:
+        ...
+
+    @property
+    def order(self) -> int:
+        ...
 
 PRECISION = 30
 TOLERANCE = Rational(1, 10)**12
@@ -82,10 +102,24 @@ def _residual_implicit(equation: Expr, G: Expr, order: int, point: Point) -> Opt
     return r if isinstance(r, Expr) and r.is_number else None
 
 
-def numeric_check(entry: ODEEntry, solution: Eq, rng: random.Random, trials: int = 3) -> Optional[bool]:
+def _has_symbolic_exponent(solution: Eq) -> bool:
+    """Whether a power in the solution has an exponent that is not a
+    number.
+
+    Substituting a random rational for such an exponent picks a principal
+    branch, and a correct solution can then leave a nonzero residual: the
+    Bernoulli family ``(...)**(-1/(n - 1))`` verifies exactly at ``n = 2``
+    and ``n = 3`` yet fails at a random rational ``n``. The numeric check
+    cannot tell that from a wrong answer, so it declines to judge.
+    """
+    from sympy import Pow
+    return any(not power.exp.is_number for power in solution.atoms(Pow))
+
+
+def numeric_check(entry: Equation, solution: Eq, rng: random.Random, trials: int = 3) -> Optional[bool]:
     """``True`` if the residual vanishes at random points, ``False`` if it
     does not, ``None`` if it could not be evaluated."""
-    if solution.has(Integral):
+    if solution.has(Integral) or _has_symbolic_exponent(solution):
         return None
     parameters = sorted((solution.free_symbols | entry.equation.free_symbols) - {x}, key=str)
     outcomes: list[bool] = []
@@ -98,14 +132,52 @@ def numeric_check(entry: ODEEntry, solution: Eq, rng: random.Random, trials: int
             r = _residual_implicit(entry.equation, as_expr(solution.lhs - solution.rhs), entry.order, point)
         if r is None or not r.is_finite:
             continue
+        if not _real_here(solution, point):
+            # the closed form is on a branch the equation is not: a real
+            # solution written with log or a fractional power evaluates
+            # complex outside its interval, and the residual there says
+            # nothing about whether the solution is right
+            continue
         outcomes.append(bool(abs(r) < TOLERANCE))
     if not outcomes:
         return None
     return all(outcomes)
 
 
-def verify(entry: ODEEntry, rng: random.Random, timeout: float) -> tuple[str, list[str]]:
-    solutions = attempt(lambda: solve_ode(entry.equation, y(x), check=False, timeout=timeout), 4*timeout)
+def _real_here(solution: Eq, point: Point) -> bool:
+    """Whether the solution takes a finite real value at the point.
+
+    Only such a point can falsify a solution of a real equation. Without
+    this the check reports a correct answer as wrong whenever the random
+    point lands where a logarithm or a fractional power turns complex --
+    ``exp(x*log(x - 1))/(x - 1)`` at ``x < 1``, say.
+    """
+    value = solution.rhs if solution.lhs == y(x) else solution.lhs - solution.rhs
+    try:
+        evaluated = N(value.subs(point), PRECISION)
+    except (TypeError, ValueError, ZeroDivisionError, ArithmeticError):
+        return False
+    if not evaluated.is_number or evaluated.has(zoo, nan, oo):
+        return False
+    imaginary = im(evaluated)
+    if not imaginary.is_number:
+        return False
+    return bool(abs(imaginary) < TOLERANCE)
+
+
+def verify(entry: Equation, rng: random.Random, timeout: float) -> tuple[str, list[str]]:
+    """``(status, one line per solution)`` for one equation.
+
+    A stack overflow is contained here rather than left to end the sweep:
+    ``sympy_extras._timeout.attempt`` does not catch ``RecursionError``
+    (sympy-extras#49), and one equation deep inside SymPy would otherwise
+    discard the results of every equation before it.
+    """
+    try:
+        solutions = attempt(lambda: solve_ode(entry.equation, y(x), check=False, timeout=timeout),
+                            4*timeout)
+    except RecursionError:
+        return 'failed (recursion)', []
     if not solutions:
         return 'failed', []
     verdicts: list[str] = []

@@ -20,6 +20,8 @@ DRIVERS: dict[str, str] = {
     'lean_tactics': "resolve on the arithmetic tactic tests (linarith, positivity) of Lean's mathlib4",
     'coq_micromega': "resolve on the micromega test suite (lia, nia, psatz) of the Rocq/Coq standard library",
     'polynomial_solving': "solve on the systems of Maxima's algsys regression file, every solution substituted back",
+    'tptp_arithmetic': "resolve on the arithmetic (ARI) domain of the TPTP problem library",
+    'reduce_odes': "solve_ode on the Postel-Zimmermann collection, from REDUCE's ODESolve test suite",
 }
 
 
