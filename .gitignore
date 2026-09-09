@@ -18,3 +18,6 @@ venv/
 
 # downloaded benchmark data (never committed: see AGENTS.md)
 .cache/
+
+# benchmark runs (never committed: see AGENTS.md)
+results/

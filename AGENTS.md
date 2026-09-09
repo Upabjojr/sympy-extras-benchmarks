@@ -1,10 +1,11 @@
 # Guidance for AI agents and contributors
 
-This repository holds the **benchmark datasets and drivers of
-[sympy-extras](https://github.com/Upabjojr/sympy-extras)**: parsers for
-the external collections the library is evaluated on, the tables of
-published results translated into SymPy expressions, the drivers which run
-the algorithms of sympy-extras on them, and the recorded results. The
+This repository **translates the benchmark collections of
+[sympy-extras](https://github.com/Upabjojr/sympy-extras) into SymPy
+expressions**: parsers for the external collections the library is
+evaluated on, the tables of published results translated into SymPy
+expressions, and the drivers which run the algorithms of sympy-extras over
+them. The measurements a run produces are not part of the repository. The
 conventions of sympy-extras (`AGENTS.md` there) apply here too; the points
 specific to this repository follow.
 
@@ -21,7 +22,7 @@ sympy_extras_benchmarks/
         tests/               parser tests on inline samples (no network, fast)
     drivers/                 one module per benchmark, each with main(argv) -> int
     __main__.py              python -m sympy_extras_benchmarks DRIVER [options]
-results/                     logs and JSON of the recorded runs (see README.md)
+results/                     runs written by --output, ignored by git
 .cache/                      downloaded data, ignored by git
 ```
 
@@ -56,9 +57,13 @@ results/                     logs and JSON of the recorded runs (see README.md)
   oracle, never against the code's own output; a wrong result is reported
   as `WRONG`/`MISMATCH` and is a bug of sympy-extras (or of the oracle) to
   be fixed there, not worked around here.
-- Recorded runs go into `results/` (log and JSON) and are summarised in
-  `README.md` with the exact command line, the SymPy and sympy-extras
-  versions and the time limit.
+- **Runs are never committed.** A run measures one version of sympy-extras
+  on one machine under one time limit; it is not part of the datasets and
+  goes stale as soon as either side moves. `results/` is ignored by git, and
+  neither logs, JSON nor tables of numbers belong in `README.md`. Report a
+  run where it is needed, with the exact command line, the SymPy and
+  sympy-extras versions and the time limit, which is all that is required to
+  reproduce it.
 
 ## Types and checks
 

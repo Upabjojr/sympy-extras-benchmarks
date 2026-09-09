@@ -1,17 +1,21 @@
 # sympy-extras-benchmarks
 
-Benchmark datasets and drivers for
-[sympy-extras](https://github.com/Upabjojr/sympy-extras), the collection of
-algorithms built on top of SymPy. This repository gathers every dataset
-which has been used to evaluate sympy-extras:
+This repository **translates the benchmark collections of
+[sympy-extras](https://github.com/Upabjojr/sympy-extras) into SymPy
+expressions**. Every dataset the library is evaluated on reaches SymPy in
+one of two ways:
 
 - **parsers** for the collections which exist in a parsable format (they are
   downloaded on first use, nothing of the files is stored here), and
 - **translations into SymPy expressions** of the tables which only existed
-  as code,
+  as code.
 
-together with the drivers which run the algorithms on them and check the
-results against the recorded answers or an independent oracle.
+A dataset, once translated, is an ordinary sequence of SymPy objects: the
+equations, the formulas and the published answers, usable from any script.
+The drivers here are one such use, running the algorithms of sympy-extras
+over a dataset and checking the results against the recorded answers or an
+independent oracle. The numbers a run produces are not part of the
+repository (see [Results](#results)).
 
 ## Datasets
 
@@ -88,7 +92,19 @@ and timeouts are counted, not wrong.
 
 ## Results
 
-Recorded runs (log and JSON) live in `results/`; the summary tables follow the runs.
+Runs are not recorded here. What a given version of sympy-extras solved on
+a given machine within a given time limit is a measurement, not part of the
+datasets, and it goes stale as soon as either side changes; `results/` is
+ignored by git. Write a run wherever you want it and compare it yourself:
+
+```
+python -m sympy_extras_benchmarks kamke_odes --collections kamke1 --limit 60 \
+    --timeout 15 --output results/kamke1.json
+```
+
+A run is reproducible from three things: the command line above, the SymPy
+version and the sympy-extras commit. Those belong next to the numbers, in
+whatever report the numbers go into.
 
 ## Tests
 
