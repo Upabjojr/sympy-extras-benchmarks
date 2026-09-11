@@ -189,18 +189,26 @@ def _serve(module_name: str, memory: int) -> int:
     from sympy.core.cache import clear_cache
     for line in sys.stdin:
         task: Task = json.loads(line)
+        exhausted = False
         try:
             result = work(task)
+            # what the check left behind is released before the next task
+            clear_cache()
+            answer = json.dumps(result, default=str)
         except MemoryError:
-            result = {'verdict': 'memory'}
+            # also when it is the bookkeeping after the check that runs out:
+            # a worker near its cap is replaced by a fresh one
+            answer = json.dumps({'id': task['id'], 'verdict': 'memory'})
+            exhausted = True
         except Exception as error:
             # the worker must outlive whatever one problem does
-            result = {'verdict': 'crash', 'error': '%s: %s' % (type(error).__name__, str(error)[:300]),
-                      'traceback': traceback.format_exc()[-3000:]}
-        result['id'] = task['id']
-        channel.write(json.dumps(result) + '\n')
+            answer = json.dumps({'id': task['id'], 'verdict': 'crash',
+                                 'error': '%s: %s' % (type(error).__name__, str(error)[:300]),
+                                 'traceback': traceback.format_exc()[-3000:]})
+        channel.write(answer + '\n')
         channel.flush()
-        clear_cache()
+        if exhausted:
+            return 0
     return 0
 
 

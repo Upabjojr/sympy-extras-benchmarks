@@ -16,6 +16,10 @@ def work(task: Task) -> Result:
         time.sleep(sleep)
     if task.get('fail'):
         raise KeyError('broken')
+    if task.get('opaque'):
+        return {'square': object()}
+    if task.get('exhaust'):
+        raise MemoryError
     n = task['n']
     assert isinstance(n, int)
     return {'square': n*n}
