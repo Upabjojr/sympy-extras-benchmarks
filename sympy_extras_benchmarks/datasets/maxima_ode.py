@@ -74,10 +74,14 @@ from typing import Callable, Optional, Sequence
 
 from sympy import (E, I, pi, oo, EulerGamma, Integer, Rational, Symbol, Function,
     Derivative, factorial, sin, cos, tan, cot, sec, csc, exp, log, sqrt, sinh,
-    cosh, tanh, coth, asin, acos, atan, acot, atan2, asinh, acosh, atanh, Abs,
-    erf, erfc, gamma, besselj, bessely, besseli, besselk, legendre, sign, floor,
-    ceiling, binomial, airyai, airybi)
+    cosh, tanh, coth, sech, csch, asin, acos, atan, acot, asec, acsc, atan2, asinh,
+    acosh, atanh, acoth, asech, acsch, Abs, im, conjugate, erf, erfc, erfi, gamma,
+    loggamma, uppergamma, beta, zeta, Ei, Si, Ci, Shi, Chi, E1, expint, fresnels,
+    fresnelc, elliptic_k, elliptic_e, elliptic_f, besselj, bessely, besseli, besselk,
+    legendre, hermite, laguerre, assoc_laguerre, chebyshevt, chebyshevu, jacobi,
+    LambertW, Heaviside, DiracDelta, sign, floor, ceiling, binomial, airyai, airybi)
 from sympy.core.basic import Basic
+from sympy.functions.elementary.complexes import re as real_part
 from sympy.core.expr import Expr
 from sympy.core.function import AppliedUndef, UndefinedFunction
 
@@ -274,6 +278,27 @@ def _binary(f: Callable[[Expr, Expr], Expr]) -> Applier:
     return apply
 
 
+def _ternary(f: Callable[[Expr, Expr, Expr], Expr]) -> Applier:
+    def apply(args: Sequence[Expr]) -> Expr:
+        if len(args) != 3:
+            raise MaximaSyntaxError("three arguments expected, got %d" % len(args))
+        return f(args[0], args[1], args[2])
+    return apply
+
+
+def _quaternary(f: Callable[[Expr, Expr, Expr, Expr], Expr]) -> Applier:
+    def apply(args: Sequence[Expr]) -> Expr:
+        if len(args) != 4:
+            raise MaximaSyntaxError("four arguments expected, got %d" % len(args))
+        return f(args[0], args[1], args[2], args[3])
+    return apply
+
+
+def _unit_step(x: Expr) -> Expr:
+    # Maxima's unit_step is 0 at 0
+    return as_expr(Heaviside(x, 0))
+
+
 def _sympy_function(f: object) -> Callable[..., Expr]:
     def apply(*args: Expr) -> Expr:
         assert callable(f)
@@ -300,6 +325,26 @@ FUNCTIONS: dict[str, Applier] = {
     'bessel_i': _binary(_S(besseli)), 'bessel_k': _binary(_S(besselk)),
     'legendre_p': _binary(_S(legendre)),
     'airy_ai': _unary(_S(airyai)), 'airy_bi': _unary(_S(airybi)),
+    # the names below occur in the integration and transform tests; each is
+    # the same function, with the same normalisation, in both systems
+    'sech': _unary(_S(sech)), 'csch': _unary(_S(csch)), 'asec': _unary(_S(asec)),
+    'acsc': _unary(_S(acsc)), 'acoth': _unary(_S(acoth)), 'asech': _unary(_S(asech)),
+    'acsch': _unary(_S(acsch)),
+    'realpart': _unary(_S(real_part)), 'imagpart': _unary(_S(im)), 'conjugate': _unary(_S(conjugate)),
+    'erfi': _unary(_S(erfi)), 'log_gamma': _unary(_S(loggamma)),
+    'gamma_incomplete': _binary(_S(uppergamma)), 'beta': _binary(_S(beta)),
+    'zeta': _unary(_S(zeta)), 'lambert_w': _unary(_S(LambertW)),
+    'expintegral_ei': _unary(_S(Ei)), 'expintegral_si': _unary(_S(Si)),
+    'expintegral_ci': _unary(_S(Ci)), 'expintegral_shi': _unary(_S(Shi)),
+    'expintegral_chi': _unary(_S(Chi)), 'expintegral_e1': _unary(_S(E1)),
+    'expintegral_e': _binary(_S(expint)),
+    'fresnel_s': _unary(_S(fresnels)), 'fresnel_c': _unary(_S(fresnelc)),
+    'elliptic_kc': _unary(_S(elliptic_k)), 'elliptic_ec': _unary(_S(elliptic_e)),
+    'elliptic_f': _binary(_S(elliptic_f)), 'elliptic_e': _binary(_S(elliptic_e)),
+    'hermite': _binary(_S(hermite)), 'laguerre': _binary(_S(laguerre)),
+    'gen_laguerre': _ternary(_S(assoc_laguerre)), 'chebyshev_t': _binary(_S(chebyshevt)),
+    'chebyshev_u': _binary(_S(chebyshevu)), 'jacobi_p': _quaternary(_S(jacobi)),
+    'unit_step': _unary(_unit_step), 'delta': _unary(_S(DiracDelta)),
 }
 
 

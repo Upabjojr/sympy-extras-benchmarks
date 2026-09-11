@@ -69,6 +69,7 @@ import os
 import pathlib
 import re
 import subprocess
+from typing import Optional
 
 from sympy import Function, Symbol
 from sympy.core.expr import Expr
@@ -78,7 +79,7 @@ from sympy_extras_benchmarks.cache import cache_directory
 from sympy_extras_benchmarks.datasets.maxima_ode import MaximaSyntaxError, parse_expression
 
 __all__ = ['ReduceODE', 'REPOSITORY', 'SUBTREE', 'FILES', 'fetch', 'load', 'equations',
-           'to_maxima']
+           'to_maxima', 'package_directory']
 
 REPOSITORY = "https://github.com/reduce-algebra/reduce-algebra"
 SUBTREE = 'packages/odesolve'
@@ -210,24 +211,38 @@ def equations(text: str, name: str = '') -> list[ReduceODE]:
     return found
 
 
-def fetch() -> list[pathlib.Path]:
-    """The test files: from ``$SYMPY_EXTRAS_BENCHMARKS_REDUCE``, or a
-    sparse clone in the cache. An empty list when unobtainable."""
+def package_directory(subtree: str = SUBTREE) -> Optional[pathlib.Path]:
+    """The directory ``subtree`` of REDUCE's sources: under
+    ``$SYMPY_EXTRAS_BENCHMARKS_REDUCE`` (a checkout, or the directory itself),
+    or in a sparse clone in the cache, to which a missing subtree is added.
+    ``None`` when unobtainable."""
     override = os.environ.get(ENVIRONMENT_VARIABLE)
-    root = pathlib.Path(override) if override and pathlib.Path(override).is_dir() else None
-    if root is None:
-        clone = cache_directory() / 'reduce'
-        if not (clone / SUBTREE).is_dir():
-            try:
+    if override and pathlib.Path(override).is_dir():
+        root = pathlib.Path(override)
+        return root / subtree if (root / subtree).is_dir() else root
+    clone = cache_directory() / 'reduce'
+    if not (clone / subtree).is_dir():
+        try:
+            if not (clone / '.git').is_dir():
                 subprocess.run(['git', 'clone', '--depth', '1', '--filter=blob:none', '--sparse',
                                 REPOSITORY, str(clone)],
                                check=True, capture_output=True, timeout=1800)
-                subprocess.run(['git', '-C', str(clone), 'sparse-checkout', 'set', SUBTREE],
+                subprocess.run(['git', '-C', str(clone), 'sparse-checkout', 'set', subtree],
                                check=True, capture_output=True, timeout=1800)
-            except (subprocess.SubprocessError, OSError):
-                return []
-        root = clone
-    directory = root / SUBTREE if (root / SUBTREE).is_dir() else root
+            else:
+                subprocess.run(['git', '-C', str(clone), 'sparse-checkout', 'add', subtree],
+                               check=True, capture_output=True, timeout=1800)
+        except (subprocess.SubprocessError, OSError):
+            return None
+    return clone / subtree if (clone / subtree).is_dir() else None
+
+
+def fetch() -> list[pathlib.Path]:
+    """The test files: from ``$SYMPY_EXTRAS_BENCHMARKS_REDUCE``, or a
+    sparse clone in the cache. An empty list when unobtainable."""
+    directory = package_directory(SUBTREE)
+    if directory is None:
+        return []
     return [directory / f for f in FILES if (directory / f).is_file()]
 
 

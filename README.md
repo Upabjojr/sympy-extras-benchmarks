@@ -37,6 +37,10 @@ repository (see [Results](#results)).
 | `maxima_limits` | Maxima's four limit regression files: the main one (a bug per entry), a larger collection, the examples of **Gruntz's 1996 thesis** — the algorithm modern CAS limits come from — and the limit problems of **Wester's** *Critique of the Mathematical Abilities of CA Systems* | Maxima `.mac`, read with the expression parser of `maxima_ode`; a call while an `assume` is in force is refused, as are `und` and `ind` | 4 files, ~1070 calls, 354 usable limits (300 with a recorded value) |
 | `pde_symmetries` | Twelve classical PDEs (heat, Burgers, KdV, wave, nonlinear diffusion, Fisher, Boussinesq, Liouville, sine-Gordon, potential Burgers, Black-Scholes) with the dimension of their point symmetry algebra from Olver, Bluman-Kumei and Ibragimov's handbook | translated into SymPy expressions | 12 equations |
 | `polynomial_systems` | The Katsura-m and cyclic-m systems with their known invariants (dimension, number of solutions, radicality) | generated as SymPy expressions | Katsura 2-6, cyclic 3-7 |
+| `maxima_integrals` | Definite integrals and Laplace transforms from Maxima's test suite: the regression file of its definite integration (`rtestint`), the definite integrals of `rtest_integrate`, the definite integrals of **Wester's** *Critique*, and the Laplace transforms of `rtest_laplace` and of `specint` (`rtest_hypgeo`, from Abramowitz and Stegun 29.3 on: Bessel functions, incomplete gamma, `erf`, orthogonal polynomials), each with the facts in force when it runs | Maxima `.mac`, read with the expression parser of `maxima_ode`; the context (`assume`, `forget`, `kill`, `declare`, `assume_pos`, assigned variables) is followed through the file, and a transform is read as its integral over `(0, oo)` | 569 integrals: rtestint 194, rtest_integrate 50, wester 22, laplace 75, specint 228; 392 with a recorded value |
+| `reduce_defint` | The test file of **REDUCE's DEFINT** package (K. Gaskell, ZIB 1993–94). DEFINT integrates products of Meijer G-functions — the Adamchik–Marichev method, which is also SymPy's `meijerint` — and its tests are integrals over `(0, oo)` and `(0, y)` of powers, exponentials, Bessel functions, `Ei`, `Si`, `Shi` and `erf` | REDUCE `.tst`, rewritten into Maxima syntax as for `reduce_odes` | 93 calls, 92 read (the Fresnel one is refused) |
+| `fricas_integrals` | FriCAS's `mapleok.input`: definite integrals of logarithms, inverse hyperbolic functions, absolute values, real and imaginary parts, over infinite ranges and along complex segments | FriCAS input, rewritten into Maxima syntax; sparse clone of `fricas/fricas` | 252 statements, 231 distinct integrals |
+| `holpy_integrals` | The worked examples of **holpy** (Xu, Li and Zhan, *Verified Interactive Computation of Definite Integrals*, CADE 2021): the MIT Integration Bee (2013, 2014, 2019, 2020), Schaum's Outline and UC Davis exercises, and proved identities (Ahmed, Frullani, Dirichlet, Catalan, Wallis, beta and gamma, log-sine) with their conditions | holpy's JSON; the last line of a checked computation, or the other side of a proved goal, is the recorded value; sparse clone of `bzhan/holpy` | 249 integrals, 218 with a recorded value |
 
 The Maxima parser (`parse_expression`) understands the operators
 `+ - * / ^ ** !`, the equality `=`, function calls, the noun form
@@ -95,6 +99,12 @@ python -m sympy_extras_benchmarks reduce_odes --timeout 20
 python -m sympy_extras_benchmarks maxima_limits --timeout 15 \
     --wolfram "ssh mathematica-host 'cat > /tmp/oracle.wl && wolframscript -file /tmp/oracle.wl'"
 python -m sympy_extras_benchmarks polynomial_solving --timeout 30
+# SymPy's integrate on the definite integrals, checked by quadrature; --meijerg forces
+# the Meijer G method, the method of REDUCE's DEFINT
+python -m sympy_extras_benchmarks definite_integrals --sources reduce,holpy --timeout 30 \
+    --output results/definite_integrals.jsonl
+python -m sympy_extras_benchmarks definite_integrals --sources reduce --meijerg \
+    --output results/definite_integrals_meijerg.jsonl
 python -m sympy_extras_benchmarks polynomial_systems
 python -m sympy_extras_benchmarks solve_random --cases 150
 python -m sympy_extras_benchmarks verify_random --sample 24 --seed 7 --timeout 15
@@ -118,6 +128,7 @@ python -m sympy_extras_benchmarks presburger_random --cases 400 --seed 3
 | `reduce_odes` | the Postel–Zimmermann ODE collection | `solve_ode`, every solution verified with `checkodesol` and numerically; a solution whose residual does not vanish is `WRONG` |
 | `maxima_limits` | Maxima's limit regression files | `limit` against Maxima's recorded value **and** Mathematica. Neither is an answer key — Maxima's limit code has its own bugs — so a `DIFFER` means sympy-extras and Mathematica disagree, and a `SUSPECT` means those two agree against Maxima. This is the driver that found #52 |
 | `polynomial_solving` | the systems of Maxima's `algsys` regression file | `solve` over the complexes; **every solution substituted back**, which is the hard check and the only one that counts as wrong; the number of solutions is compared with Mathematica's `Solve` and with the count Maxima records, and reported but not counted |
+| `definite_integrals` | the definite integrals of `maxima_integrals`, `reduce_defint`, `fricas_integrals` and `holpy_integrals` | SymPy's `integrate` — sympy-extras has no integrator; `--meijerg` forces the Meijer G method — with the facts of the source as assumptions, in parallel workers (`runner`). The result is evaluated at two samples of the parameters satisfying the facts and compared with numerical quadrature, trusted only when mpmath's tanh-sinh and Gauss-Legendre rules agree; a disagreement is `WRONG`. The source's recorded value is checked the same way, and a wrong one is reported as `SOURCE`, a finding about the source |
 | `polynomial_systems` | Katsura and cyclic systems | `Ideal.dimension`, `vector_space_dimension`, `is_radical` against the known values; FGLM against the Gröbner walk |
 | `solve_random` | random polynomial equations with sign assumptions; with `--transcendental N`, random equations in `exp`, `log`, `sin`, `cos`, `sqrt` | `solve` against `Poly.real_roots` or against sign changes on a fine grid refined with `nsolve` |
 | `verify_random` | a random sample of the collections | `solve_ode`; every solution verified with `checkodesol` and numerically; a solution failing the numerical check is `WRONG` |
@@ -163,8 +174,10 @@ be pointed to with the environment variable in the last column.
 | Maxima `contrib_ode` tests — the Kamke and Murphy collections | [`git.code.sf.net/p/maxima/code`](https://git.code.sf.net/p/maxima/code), mirror [`calyau/maxima`](https://github.com/calyau/maxima) | GPL-2.0 (`COPYING`) | the equations and the one-word method classification. **Maxima's solutions and code are not used** | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
 | Maxima `tests/rtest_limit*.mac` — the limit regression files | as above | GPL-2.0 | the calls and the recorded values, the latter as a third opinion only | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
 | Maxima `tests/rtest_algsys.mac` — the `algsys` regression file | as above | GPL-2.0 | the systems and the unknowns; the recorded solutions are *counted* as a third opinion and are not the answer key | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
+| Maxima `tests/rtestint.mac`, `rtest_integrate.mac`, `rtest_laplace.mac`, `rtest_hypgeo.mac` and `wester_problems/test_definite_integrals.mac` — definite integrals and Laplace transforms | as above | GPL-2.0; Wester's problems were released under it by their author (`wester-gpl-permission-message.txt`) | the calls, the facts in force when they run, and the recorded values, the latter as a third opinion only | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
 | TPTP `ARI` domain | [tptp.org](https://tptp.org) | distributed by Geoff Sutcliffe under TPTP's own terms; each problem is the work of the authors named in its header | the formulas and the recorded `Status` | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |
 | REDUCE `ODESolve` tests — the Postel–Zimmermann collection | [`reduce-algebra/reduce-algebra`](https://github.com/reduce-algebra/reduce-algebra) | *Reduce License*, a BSD 2-clause style licence (`LICENSE`) | the equations only. **REDUCE's solutions and code are not used** | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
+| REDUCE DEFINT tests — Gaskell's collection | [`reduce-algebra/reduce-algebra`](https://github.com/reduce-algebra/reduce-algebra), `packages/defint` | *Reduce License*, a BSD 2-clause style licence (`LICENSE`) | the four-argument `int` calls. **REDUCE's results (`defint.rlg`), the transforms and the code are not used** | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
 | SMT-LIB `QF_NRA` — the Meti-Tarski family | [`dreal/benchmarks`](https://github.com/dreal/benchmarks) (a mirror) | no license file in the mirror; the SMT-LIB benchmarks carry their own terms | the formulas and the `:status` | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB` |
 | cvc5 regression suite | [`cvc5/cvc5`](https://github.com/cvc5/cvc5) | modified BSD (`COPYING`; the GPL notice there is about optional link-time dependencies, not the test files) | the formulas and the recorded `sat`/`unsat` | — |
 | Z3 regression suite | [`Z3Prover/z3test`](https://github.com/Z3Prover/z3test) | MIT (`LICENSE.txt`, Microsoft Corporation) | the formulas and the recorded status | — |
@@ -177,6 +190,8 @@ be pointed to with the environment variable in the last column.
 | PDE symmetry dimensions | Olver, Bluman–Kumei, Ibragimov's handbook | published results, cited in the module docstring | the dimension of each symmetry algebra | — |
 | Katsura and cyclic systems | the literature | published results, cited in the module docstring | the systems and their invariants | — |
 | `algsys` literature systems | Beyer (1984), Morgan (1983), cited in `polynomial_solving` | published results | the systems and the number of solutions | — |
+| FriCAS `src/input/mapleok.input` | [`fricas/fricas`](https://github.com/fricas/fricas) | modified BSD, 3-clause (`LICENSE.txt`) | the integrands, variables and endpoints. **FriCAS's answers, in the comments, and its code are not used** | `$SYMPY_EXTRAS_BENCHMARKS_FRICAS` |
+| holpy `integral/examples` — MIT Integration Bee, Schaum's Outline, UC Davis, proved identities | [`bzhan/holpy`](https://github.com/bzhan/holpy) | BSD-3-Clause (`LICENSE`); the problems are credited in the files to their competitions and books | the problems and goals with their conditions, and the final value of each computation as a third opinion. **holpy's steps and code are not used** | `$SYMPY_EXTRAS_BENCHMARKS_HOLPY` |
 
 Two rules follow from the table, and are also in `AGENTS.md`:
 
@@ -197,6 +212,8 @@ Recorded so the ground is not covered twice:
 | [`rocq-prover/rocq`](https://github.com/rocq-prover/rocq) | LGPL-2.1 | the micromega tests are no longer there; they live in `rocq-prover/stdlib`, which is what is read |
 | Goedel-Prover / miniF2F / ProofNet | MIT (miniF2F), Apache-2.0 (Goedel-Prover) | olympiad and undergraduate problems, almost none in a decidable arithmetic fragment |
 | mathlib4 `FieldSimp.lean` | Apache-2.0 | its goals are `P (expr)` assertions about mathlib's normal form, not truth claims |
+| [IntegralBench](https://github.com/vegetable-yx/IntegralBench) — 317 graduate-level definite integrals with numerical answers | no licence file | no licence, and the problems are transcribed from a textbook and competitions whose rights are not theirs to give; LaTeX only. Its numerical answers would make a good oracle if its authors licensed it |
+| N. Abbasi's *Computer Algebra Independent Integration Tests* (12000.org) | — | indefinite integrals only (Rubi's test suite); nothing definite to read |
 
 ## License
 

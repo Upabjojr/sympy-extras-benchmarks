@@ -26,6 +26,7 @@ DRIVERS: dict[str, str] = {
     'reduce_odes': "solve_ode on the Postel-Zimmermann collection, from REDUCE's ODESolve test suite",
     'smtlib_release': "satisfiable, simplify, refine (QF_NRA) and resolve (NRA) on every problem of the SMT-LIB 2025 release, in parallel",
     'cad_examples': "resolve and satisfiable on the Bath CAD example bank and the tests of QEPCAD B and Tarski",
+    'definite_integrals': "integrate on the definite integrals of Maxima, REDUCE's DEFINT, FriCAS and holpy, against quadrature",
     'wolfram_check': "settle with Mathematica the answers of smtlib_release and cad_examples no recorded answer confirms",
 }
 

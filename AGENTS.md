@@ -34,10 +34,16 @@ sympy_extras_benchmarks/
         polynomial_systems.py  Katsura and cyclic systems with their invariants
         polynomial_solving.py  systems of polynomial equations: Maxima's algsys regression file
         maxima_limits.py     limits: Maxima's four regression files, Gruntz and Wester included
+        integrals.py         the record of a definite integral, and the helpers the integration datasets share
+        maxima_integrals.py  definite integrals and Laplace transforms: rtestint, rtest_integrate, Wester, laplace, specint
+        reduce_defint.py     the definite integrals of REDUCE's DEFINT tests (the Meijer G method)
+        fricas_integrals.py  FriCAS's mapleok collection, complex paths included
+        holpy_integrals.py   holpy's examples: MIT Integration Bee, Schaum's, UC Davis, proved identities
         tests/               parser tests on inline samples (no network, fast)
     runner.py                parallel, resumable runs in worker processes with time and memory limits
     oracles/                 independent oracles a driver can check against
         wolfram.py           Mathematica behind a command given with --wolfram
+        quadrature.py        numerical quadrature for definite integrals, trusted when two mpmath rules agree
     drivers/                 one module per benchmark, each with main(argv) -> int
     __main__.py              python -m sympy_extras_benchmarks DRIVER [options]
 results/                     runs written by --output, ignored by git
@@ -67,6 +73,10 @@ results/                     runs written by --output, ignored by git
   | Rocq micromega tests (`coq_micromega`) | `rocq-prover/stdlib` | LGPL-2.1 | `$SYMPY_EXTRAS_BENCHMARKS_ROCQ_STDLIB` |
   | TPTP `ARI` domain (`tptp_arithmetic`) | tptp.org, official distribution | TPTP's own terms; problems credited in their headers | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |
   | Postel-Zimmermann ODEs (`reduce_odes`) | `reduce-algebra/reduce-algebra` | Reduce License (BSD 2-clause style) | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
+  | integration and transform tests (`maxima_integrals`) | Maxima, `tests/` | GPL-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
+  | DEFINT tests (`reduce_defint`) | `reduce-algebra/reduce-algebra` | Reduce License (BSD 2-clause style) | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
+  | `mapleok.input` (`fricas_integrals`) | `fricas/fricas` | modified BSD | `$SYMPY_EXTRAS_BENCHMARKS_FRICAS` |
+  | integral examples (`holpy_integrals`) | `bzhan/holpy` | BSD-3-Clause | `$SYMPY_EXTRAS_BENCHMARKS_HOLPY` |
 
   Only the mathematical content is read: the equations of Kamke's and
   Murphy's books, the formulas and the `:status` of the SMT-LIB problems,
