@@ -33,6 +33,9 @@ Examples
 >>> from sympy_extras.assumptions import Exists
 >>> print(to_wolfram(Exists(x, x**2 < y)))
 Exists[{sympyx}, (sympyx^(2) < sympyy)]
+>>> from sympy import CRootOf
+>>> print(to_wolfram(x > CRootOf(x**3 - x - 1, 0)))
+(sympyx > Root[Function[{sympyx}, (-1 + sympyx^(3) + (-1*sympyx))], 1])
 """
 from __future__ import annotations
 
@@ -94,6 +97,7 @@ def to_wolfram(node: Basic) -> str:
     from sympy.core.numbers import Exp1, ImaginaryUnit, NegativeInfinity
     from sympy.logic.boolalg import BooleanFalse, BooleanTrue, Equivalent
     from sympy.core.function import AppliedUndef
+    from sympy.polys.rootoftools import ComplexRootOf
     if node is oo:
         return "Infinity"
     if isinstance(node, NegativeInfinity):
@@ -115,6 +119,14 @@ def to_wolfram(node: Basic) -> str:
     name = FUNCTIONS.get(type(node).__name__)
     if name is not None and not isinstance(node, AppliedUndef):
         return "%s[%s]" % (name, ", ".join(to_wolfram(a) for a in node.args))
+    if isinstance(node, ComplexRootOf):
+        # SymPy numbers the real roots first, in increasing order, and so
+        # does Mathematica's Root: the k-th real root is Root[f, k + 1]
+        polynomial, index = node.args
+        generators = sorted(polynomial.free_symbols, key=str)
+        if not node.is_real or len(generators) != 1 or not isinstance(index, Integer):
+            raise WolframError("cannot print the root %s" % (node,))
+        return "Root[Function[{%s}, %s], %d]" % (to_wolfram(generators[0]), to_wolfram(polynomial), int(index) + 1)
     if isinstance(node, BooleanTrue):
         return "True"
     if isinstance(node, BooleanFalse):

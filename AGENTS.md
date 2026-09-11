@@ -18,6 +18,11 @@ sympy_extras_benchmarks/
         maxima_ode.py        parser of Maxima's contrib_ode test files: Kamke and Murphy collections
         smtlib.py            SMT-LIB 2 parser (QF_NRA): the Meti-Tarski family
         solver_regressions.py  SMT-LIB 2 over the integers and with quantifiers: the cvc5 and Z3 regression suites
+        smtlib_release.py    every problem of SMT-LIB QF_NRA and NRA: the 2025 release, from Zenodo
+        qepcad_syntax.py     the formula language of QEPCAD B and Tarski, and QEPCAD's input dialogue
+        bath_cad.py          the Bath CAD example bank (QEPCAD inputs, Maple lists, cell counts)
+        qepcad_tests.py      the regression tests and worked examples of QEPCAD B
+        tarski_tests.py      the tests of Tarski: GeoGebra, ISSAC, interpreter, Brown--Vale-Enriquez
         prover_syntax.py     the arithmetic grammar the proof-assistant parsers share, and its refusals
                              (chained relations, abs, and the guards for total arithmetic, which
                              read an *unevaluated* parse because SymPy settles arithmetic as it reads)
@@ -30,6 +35,7 @@ sympy_extras_benchmarks/
         polynomial_solving.py  systems of polynomial equations: Maxima's algsys regression file
         maxima_limits.py     limits: Maxima's four regression files, Gruntz and Wester included
         tests/               parser tests on inline samples (no network, fast)
+    runner.py                parallel, resumable runs in worker processes with time and memory limits
     oracles/                 independent oracles a driver can check against
         wolfram.py           Mathematica behind a command given with --wolfram
     drivers/                 one module per benchmark, each with main(argv) -> int
@@ -53,6 +59,10 @@ results/                     runs written by --output, ignored by git
   | Meti-Tarski `QF_NRA` (`smtlib`) | `dreal/benchmarks` (mirror) | no licence file; SMT-LIB's own terms | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB` |
   | cvc5 regressions (`solver_regressions`) | `cvc5/cvc5` | modified BSD | — |
   | Z3 regressions (`solver_regressions`) | `Z3Prover/z3test` | MIT | — |
+  | SMT-LIB 2025 `QF_NRA` and `NRA` (`smtlib_release`) | Zenodo record 16740866 | CC BY 4.0 | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB_RELEASE` |
+  | Bath CAD example bank (`bath_cad`) | University of Bath Research Data Archive, doi:10.15125/BATH-00069 | CC BY-SA 4.0 | `$SYMPY_EXTRAS_BENCHMARKS_BATH_CAD` |
+  | QEPCAD B tests (`qepcad_tests`) | `chriswestbrown/qepcad` | ISC-style | `$SYMPY_EXTRAS_BENCHMARKS_QEPCAD` |
+  | Tarski tests (`tarski_tests`) | `chriswestbrown/tarski` | ISC-style | `$SYMPY_EXTRAS_BENCHMARKS_TARSKI` |
   | mathlib4 tactic tests (`lean_tactics`) | `leanprover-community/mathlib4` | Apache-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MATHLIB` |
   | Rocq micromega tests (`coq_micromega`) | `rocq-prover/stdlib` | LGPL-2.1 | `$SYMPY_EXTRAS_BENCHMARKS_ROCQ_STDLIB` |
   | TPTP `ARI` domain (`tptp_arithmetic`) | tptp.org, official distribution | TPTP's own terms; problems credited in their headers | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |
