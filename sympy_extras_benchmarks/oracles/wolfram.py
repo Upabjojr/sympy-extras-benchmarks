@@ -39,6 +39,7 @@ Exists[{sympyx}, (sympyx^(2) < sympyy)]
 """
 from __future__ import annotations
 
+import re
 import subprocess
 from typing import Optional, Sequence
 
@@ -51,7 +52,7 @@ from sympy.core.singleton import S
 
 from sympy_extras.assumptions import ForAll, Quantifier
 
-__all__ = ['WolframError', 'wolfram_name', 'to_wolfram', 'Wolfram']
+__all__ = ['WolframError', 'wolfram_name', 'to_wolfram', 'number', 'Wolfram']
 
 #: the prefix which keeps SymPy names away from Mathematica's built-ins
 PREFIX = 'sympy'
@@ -76,7 +77,18 @@ FUNCTIONS: dict[str, str] = {
     'floor': 'Floor', 'ceiling': 'Ceiling', 'sign': 'Sign', 're': 'Re', 'im': 'Im',
     'arg': 'Arg', 'conjugate': 'Conjugate', 'Max': 'Max', 'Min': 'Min',
     'besselj': 'BesselJ', 'bessely': 'BesselY', 'besseli': 'BesselI', 'besselk': 'BesselK',
-    'harmonic': 'HarmonicNumber', 'polygamma': 'PolyGamma', 'lowergamma': 'Gamma',
+    'harmonic': 'HarmonicNumber', 'polygamma': 'PolyGamma', 'uppergamma': 'Gamma',
+    # the special functions of the integration benchmarks, each with the
+    # same normalisation and argument order in both systems
+    'Si': 'SinIntegral', 'Ci': 'CosIntegral', 'Shi': 'SinhIntegral', 'Chi': 'CoshIntegral',
+    'expint': 'ExpIntegralE', 'erfi': 'Erfi', 'beta': 'Beta', 'LambertW': 'ProductLog',
+    'fresnels': 'FresnelS', 'fresnelc': 'FresnelC', 'elliptic_k': 'EllipticK',
+    'elliptic_e': 'EllipticE', 'elliptic_f': 'EllipticF', 'hermite': 'HermiteH',
+    'laguerre': 'LaguerreL', 'assoc_laguerre': 'LaguerreL', 'legendre': 'LegendreP',
+    'chebyshevt': 'ChebyshevT', 'chebyshevu': 'ChebyshevU', 'jacobi': 'JacobiP',
+    'DiracDelta': 'DiracDelta', 'airyai': 'AiryAi', 'airybi': 'AiryBi',
+    'sech': 'Sech', 'csch': 'Csch', 'asec': 'ArcSec', 'acsc': 'ArcCsc', 'acoth': 'ArcCoth',
+    'asech': 'ArcSech', 'acsch': 'ArcCsch',
 }
 
 
@@ -115,8 +127,8 @@ def to_wolfram(node: Basic) -> str:
     connectives, ``Mod``, ``Abs`` and the quantifiers of sympy-extras.
     Anything else raises :class:`WolframError`.
     """
-    from sympy import (Abs, Add, And, Eq, Ge, Gt, Implies, Le, Lt, Mod, Mul, Ne, Not, Or, Pow,
-                       Xor, atan2, nan, oo, pi, zoo)
+    from sympy import (Abs, Add, And, Eq, Float, Ge, Gt, Heaviside, Implies, Le, Lt, Mod, Mul,
+                       Ne, Not, Or, Pow, Xor, atan2, lowergamma, nan, oo, pi, zoo)
     from sympy.core.numbers import Exp1, ImaginaryUnit, NegativeInfinity
     from sympy.logic.boolalg import BooleanFalse, BooleanTrue, Equivalent
     from sympy.core.function import AppliedUndef
@@ -135,6 +147,18 @@ def to_wolfram(node: Basic) -> str:
         return "E"
     if isinstance(node, ImaginaryUnit):
         return "I"
+    if node is S.Catalan or node is S.EulerGamma or node is S.GoldenRatio:
+        return {S.Catalan: "Catalan", S.EulerGamma: "EulerGamma", S.GoldenRatio: "GoldenRatio"}[node]
+    if isinstance(node, lowergamma):
+        # Mathematica's Gamma[a, z] is the *upper* incomplete gamma function
+        return "Gamma[%s, 0, %s]" % (to_wolfram(node.args[0]), to_wolfram(node.args[1]))
+    if isinstance(node, Heaviside):
+        # SymPy's value at 0 is its second argument (1/2 by default)
+        argument = to_wolfram(node.args[0])
+        at_zero = to_wolfram(node.args[1]) if len(node.args) > 1 else "(1/2)"
+        return "If[%s > 0, 1, If[%s < 0, 0, %s]]" % (argument, argument, at_zero)
+    if isinstance(node, Float):
+        return "(%s)" % str(node).replace('e', '*^')
     if isinstance(node, atan2):
         # Mathematica takes the arguments the other way round:
         # ArcTan[x, y] is the angle of (x, y), i.e. atan2(y, x)
@@ -199,6 +223,23 @@ def to_wolfram(node: Basic) -> str:
     if isinstance(node, Ge):
         return "(%s >= %s)" % (to_wolfram(node.args[0]), to_wolfram(node.args[1]))
     raise WolframError("cannot print %s (%s)" % (node, type(node).__name__))
+
+
+def number(text: str) -> Optional[complex]:
+    """The number Mathematica printed in ``InputForm``, or ``None`` when it
+    printed anything else (an unevaluated call, ``$Aborted``, a message).
+
+    >>> from sympy_extras_benchmarks.oracles.wolfram import number
+    >>> number('1.772453850905516027298`20.'), number('1.5*^-3 - 2.*I'), number('$Aborted')
+    ((1.772453850905516+0j), (0.0015-2j), None)
+    """
+    body = re.sub(r"`[0-9.]*", "", text.strip()).replace('*^', 'e')
+    if not body or not re.fullmatch(r"[0-9.eI+\-*() ]+", body):
+        return None
+    try:
+        return complex(eval(body.replace('I', '1j'), {'__builtins__': {}}, {}))
+    except (SyntaxError, TypeError, ValueError, ZeroDivisionError, NameError):
+        return None
 
 
 class Wolfram:

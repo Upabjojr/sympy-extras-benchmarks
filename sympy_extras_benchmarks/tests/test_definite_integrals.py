@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import random
 
-from sympy import I, Integer, Integral, Symbol, exp, oo, pi, sqrt
+from sympy import (Catalan, Heaviside, I, Integer, Integral, Rational, Si, Symbol, exp,
+                   lowergamma, oo, pi, sqrt, uppergamma)
 from sympy.core.expr import Expr
 
 from sympy_extras._typing import as_expr
 
 from sympy_extras_benchmarks.datasets.integrals import DefiniteIntegral
-from sympy_extras_benchmarks.drivers.definite_integrals import assumed_symbols, check
+from sympy_extras_benchmarks.drivers.definite_integrals import (
+    assumed_symbols, check, wolfram_query)
 from sympy_extras_benchmarks.oracles.quadrature import agree, numerical, quadrature, sample
+from sympy_extras_benchmarks.oracles.wolfram import number, to_wolfram
 
 x, z, a, s, n = (Symbol(name) for name in ('x', 'z', 'a', 's', 'n'))
 
@@ -96,3 +99,27 @@ def test_an_unevaluated_result_and_no_answer() -> None:
 
     assert check(entry, random.Random(1), 30.0, unevaluated)['verdict'] == 'unevaluated'
     assert check(entry, random.Random(1), 30.0, gives_up)['verdict'] == 'no answer'
+
+
+def test_the_special_functions_are_printed_for_mathematica() -> None:
+    assert to_wolfram(Si(x)) == 'SinIntegral[sympyx]'
+    assert to_wolfram(uppergamma(a, x)) == 'Gamma[sympya, sympyx]'
+    # Mathematica's two-argument Gamma is the upper one
+    assert to_wolfram(lowergamma(a, x)) == 'Gamma[sympya, 0, sympyx]'
+    assert to_wolfram(Catalan) == 'Catalan'
+    assert to_wolfram(Heaviside(x)) == 'If[sympyx > 0, 1, If[sympyx < 0, 0, (1/2)]]'
+
+
+def test_numbers_printed_by_mathematica() -> None:
+    assert number('0.25') == 0.25
+    assert number('1.5*^-3 + 2.*I') == complex(0.0015, 2)
+    assert number('0.3333333333333333333333`20.') == 1/3
+    for text in ('$Aborted', '$Failed', 'NIntegrate[sympyx, {sympyx, 0, 1}]', ''):
+        assert number(text) is None
+
+
+def test_the_question_asked_of_mathematica() -> None:
+    entry = DefiniteIntegral('t:11', exp(-a*x), x, 0, oo)
+    assert wolfram_query(entry, {a: Rational(3, 2)}) == (
+        'NIntegrate[Exp[((-3/2)*sympyx)], {sympyx, 0, Infinity}, '
+        'WorkingPrecision -> 20, MaxRecursion -> 20]')

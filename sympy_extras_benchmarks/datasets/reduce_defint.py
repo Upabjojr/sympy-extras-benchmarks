@@ -58,6 +58,7 @@ y**2*besselk(1, y)
 """
 from __future__ import annotations
 
+import pathlib
 import re
 
 from sympy import Symbol
@@ -67,10 +68,15 @@ from sympy_extras_benchmarks.datasets.integrals import (
 from sympy_extras_benchmarks.datasets.reduce_odes import (
     package_directory, strip_comments, to_maxima)
 
-__all__ = ['SUBTREE', 'FILES', 'integrals', 'fetch', 'load', 'to_maxima_names']
+__all__ = ['SUBTREE', 'FILES', 'LICENCE', 'LICENCE_FILES', 'integrals', 'fetch', 'load',
+           'licence_files', 'to_maxima_names']
 
 SUBTREE = 'packages/defint'
 FILES: tuple[str, ...] = ('defint.tst',)
+#: the licence, and the file at the root of REDUCE's repository carrying it,
+#: which the sparse clone keeps
+LICENCE = 'Reduce License (BSD 2-clause style)'
+LICENCE_FILES: tuple[str, ...] = ('LICENSE',)
 
 _CALL = re.compile(r"(?<![\w%])int\s*\(")
 
@@ -117,6 +123,15 @@ def integrals(text: str, name: str = '') -> list[DefiniteIntegral]:
             continue
         found.append(DefiniteIntegral('%s:%d' % (name, index), integrand, variable, lower, upper))
     return found
+
+
+def licence_files() -> list[pathlib.Path]:
+    """The licence files kept with the fetched package."""
+    directory = package_directory(SUBTREE)
+    if directory is None:
+        return []
+    root = directory.parent.parent if directory.name == SUBTREE.split('/')[-1] else directory
+    return [root / name for name in LICENCE_FILES if (root / name).is_file()]
 
 
 def fetch() -> list[tuple[str, str]]:

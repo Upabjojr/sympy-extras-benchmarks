@@ -63,11 +63,16 @@ from sympy_extras_benchmarks.cache import cache_directory
 from sympy_extras_benchmarks.datasets.integrals import (
     DefiniteIntegral, group, parse, split_arguments)
 
-__all__ = ['REPOSITORY', 'SUBTREE', 'FILES', 'integrals', 'to_maxima', 'fetch', 'load']
+__all__ = ['REPOSITORY', 'SUBTREE', 'FILES', 'integrals', 'to_maxima', 'fetch', 'load',
+           'LICENCE', 'LICENCE_FILES', 'licence_files']
 
 REPOSITORY = "https://github.com/fricas/fricas"
 SUBTREE = 'src/input'
 FILES: tuple[str, ...] = ('mapleok.input',)
+#: the licence, and the file at the root of the repository carrying it,
+#: which the sparse clone keeps
+LICENCE = 'modified BSD (3-clause)'
+LICENCE_FILES: tuple[str, ...] = ('LICENSE.txt',)
 #: a checkout of FriCAS, or a directory holding the input files
 ENVIRONMENT_VARIABLE = 'SYMPY_EXTRAS_BENCHMARKS_FRICAS'
 
@@ -159,6 +164,15 @@ def _directory() -> Optional[pathlib.Path]:
         except (subprocess.SubprocessError, OSError):
             return None
     return clone / SUBTREE if (clone / SUBTREE).is_dir() else None
+
+
+def licence_files() -> list[pathlib.Path]:
+    """The licence files kept with the fetched data."""
+    directory = _directory()
+    if directory is None:
+        return []
+    root = directory.parent.parent if directory.as_posix().endswith(SUBTREE) else directory
+    return [root / name for name in LICENCE_FILES if (root / name).is_file()]
 
 
 def fetch() -> list[tuple[str, str]]:

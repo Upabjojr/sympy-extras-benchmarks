@@ -78,10 +78,15 @@ from sympy_extras_benchmarks.cache import cache_directory
 from sympy_extras_benchmarks.datasets.integrals import (
     DefiniteIntegral, group, parse, relation, split_arguments)
 
-__all__ = ['REPOSITORY', 'SUBTREE', 'integrals', 'to_maxima', 'fetch', 'load']
+__all__ = ['REPOSITORY', 'SUBTREE', 'integrals', 'to_maxima', 'fetch', 'load',
+           'LICENCE', 'LICENCE_FILES', 'licence_files']
 
 REPOSITORY = "https://github.com/bzhan/holpy"
 SUBTREE = 'integral/examples'
+#: the licence, and the file at the root of the repository carrying it,
+#: which the sparse clone keeps
+LICENCE = 'BSD-3-Clause'
+LICENCE_FILES: tuple[str, ...] = ('LICENSE',)
 #: a checkout of holpy, or its examples directory
 ENVIRONMENT_VARIABLE = 'SYMPY_EXTRAS_BENCHMARKS_HOLPY'
 
@@ -232,6 +237,15 @@ def _directory() -> Optional[pathlib.Path]:
         except (subprocess.SubprocessError, OSError):
             return None
     return clone / SUBTREE if (clone / SUBTREE).is_dir() else None
+
+
+def licence_files() -> list[pathlib.Path]:
+    """The licence files kept with the fetched data."""
+    directory = _directory()
+    if directory is None:
+        return []
+    root = directory.parent.parent if directory.as_posix().endswith(SUBTREE) else directory
+    return [root / name for name in LICENCE_FILES if (root / name).is_file()]
 
 
 def fetch() -> list[tuple[str, list[JSONValue]]]:

@@ -83,6 +83,11 @@ results/                     runs written by --output, ignored by git
   the binders/hypotheses/conclusion of a Lean or Rocq goal. **Maxima's
   solutions and code are not used, and neither are the assistants'
   proofs.**
+- **The licence file travels with the data.** A sparse clone keeps the
+  files at the root of the repository, where the licence is; a module whose
+  fetch could lose it (a single file from a mirror) says so. The
+  integration datasets name the licence and its files (`LICENCE`,
+  `LICENCE_FILES`, `licence_files()`), and their driver prints them.
 - **A new dataset must record its source and licence** in the table above
   and in the `## Sources and licenses` table of `README.md`, together with
   what is read and what is deliberately not read. A source that is looked

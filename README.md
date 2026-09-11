@@ -105,6 +105,8 @@ python -m sympy_extras_benchmarks definite_integrals --sources reduce,holpy --ti
     --output results/definite_integrals.jsonl
 python -m sympy_extras_benchmarks definite_integrals --sources reduce --meijerg \
     --output results/definite_integrals_meijerg.jsonl
+python -m sympy_extras_benchmarks definite_integrals --timeout 30 --output results/definite_integrals.jsonl \
+    --wolfram "ssh mathematica-host 'cat > /tmp/oracle.wl && wolframscript -file /tmp/oracle.wl'"
 python -m sympy_extras_benchmarks polynomial_systems
 python -m sympy_extras_benchmarks solve_random --cases 150
 python -m sympy_extras_benchmarks verify_random --sample 24 --seed 7 --timeout 15
@@ -128,7 +130,7 @@ python -m sympy_extras_benchmarks presburger_random --cases 400 --seed 3
 | `reduce_odes` | the Postel–Zimmermann ODE collection | `solve_ode`, every solution verified with `checkodesol` and numerically; a solution whose residual does not vanish is `WRONG` |
 | `maxima_limits` | Maxima's limit regression files | `limit` against Maxima's recorded value **and** Mathematica. Neither is an answer key — Maxima's limit code has its own bugs — so a `DIFFER` means sympy-extras and Mathematica disagree, and a `SUSPECT` means those two agree against Maxima. This is the driver that found #52 |
 | `polynomial_solving` | the systems of Maxima's `algsys` regression file | `solve` over the complexes; **every solution substituted back**, which is the hard check and the only one that counts as wrong; the number of solutions is compared with Mathematica's `Solve` and with the count Maxima records, and reported but not counted |
-| `definite_integrals` | the definite integrals of `maxima_integrals`, `reduce_defint`, `fricas_integrals` and `holpy_integrals` | SymPy's `integrate` — sympy-extras has no integrator; `--meijerg` forces the Meijer G method — with the facts of the source as assumptions, in parallel workers (`runner`). The result is evaluated at two samples of the parameters satisfying the facts and compared with numerical quadrature, trusted only when mpmath's tanh-sinh and Gauss-Legendre rules agree; a disagreement is `WRONG`. The source's recorded value is checked the same way, and a wrong one is reported as `SOURCE`, a finding about the source |
+| `definite_integrals` | the definite integrals of `maxima_integrals`, `reduce_defint`, `fricas_integrals` and `holpy_integrals` | SymPy's `integrate` — sympy-extras has no integrator; `--meijerg` forces the Meijer G method — with the facts of the source as assumptions, in parallel workers (`runner`). The result is evaluated at two samples of the parameters satisfying the facts and compared with numerical quadrature, trusted only when mpmath's tanh-sinh and Gauss-Legendre rules agree; a disagreement is `WRONG`. With `--wolfram COMMAND`, Mathematica's `NIntegrate` settles at the same sample every result the quadrature could not check, and every `WRONG` one. The source's recorded value is checked against the quadrature, and a wrong one is reported as `SOURCE`, a finding about the source. The licence of each dataset, and where its licence file is kept, is printed before the run |
 | `polynomial_systems` | Katsura and cyclic systems | `Ideal.dimension`, `vector_space_dimension`, `is_radical` against the known values; FGLM against the Gröbner walk |
 | `solve_random` | random polynomial equations with sign assumptions; with `--transcendental N`, random equations in `exp`, `log`, `sin`, `cos`, `sqrt` | `solve` against `Poly.real_roots` or against sign changes on a fine grid refined with `nsolve` |
 | `verify_random` | a random sample of the collections | `solve_ode`; every solution verified with `checkodesol` and numerically; a solution failing the numerical check is `WRONG` |
@@ -168,6 +170,12 @@ Every dataset is read from an upstream project. **Nothing from any of them is
 committed to this repository**: each parser fetches on first use into `.cache/`
 (or `$SYMPY_EXTRAS_BENCHMARKS_CACHE`), which is gitignored, and a local copy can
 be pointed to with the environment variable in the last column.
+
+The licence file of each upstream project is kept with its data: the sparse
+clones keep the files at the root of each repository, where the licence is. A
+dataset module names its licence and those files (`LICENCE`, `LICENCE_FILES`,
+`licence_files()` in the integration datasets), and `definite_integrals` prints
+them before a run.
 
 | Source | Upstream | License (as published there) | What is read | Local override |
 |---|---|---|---|---|

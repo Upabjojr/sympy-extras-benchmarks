@@ -83,6 +83,7 @@ DefiniteIntegral(demo:2, u from 0 to oo, recorded 1/k)
 """
 from __future__ import annotations
 
+import pathlib
 import re
 from typing import Optional, Sequence
 
@@ -92,12 +93,14 @@ from sympy.logic.boolalg import Boolean
 
 from sympy_extras._typing import as_boolean, as_expr
 
+from sympy_extras_benchmarks.cache import cache_directory
 from sympy_extras_benchmarks.datasets.integrals import (
     PROPERTIES, DefiniteIntegral, group, parse, relation, split_arguments)
 from sympy_extras_benchmarks.datasets.maxima_limits import strip_comments
 from sympy_extras_benchmarks.datasets.maxima_ode import TESTS_SUBDIRECTORY, fetch as fetch_maxima
 
-__all__ = ['FILES', 'COLLECTIONS', 'statements', 'integrals', 'fetch', 'load']
+__all__ = ['FILES', 'COLLECTIONS', 'LICENCE', 'LICENCE_FILES', 'statements', 'integrals', 'fetch',
+           'load', 'licence_files']
 
 #: each collection: the file, where it lives in Maxima's repository, and
 #: whether a recorded value follows every statement (the ``rtest`` format)
@@ -110,6 +113,11 @@ FILES: dict[str, tuple[str, str, bool]] = {
     'specint': ('rtest_hypgeo', TESTS_SUBDIRECTORY, True),
 }
 COLLECTIONS: tuple[str, ...] = tuple(FILES)
+#: the licence, and the files of Maxima's repository that carry it: the GPL
+#: itself and Wester's permission to release his problems under it. The
+#: sparse clone keeps both beside the tests.
+LICENCE = 'GPL-2.0'
+LICENCE_FILES: tuple[str, ...] = ('COPYING', TESTS_SUBDIRECTORY + '/wester_problems/wester-gpl-permission-message.txt')
 
 #: the calls read; a leading quote is the noun form, left unevaluated
 _CALL = re.compile(r"(?<![\w%'])('?)(integrate|defint|laplace|specint)\s*\(")
@@ -394,6 +402,13 @@ def integrals(text: str, collection: str = '', values_follow: bool = True
                 found.append(DefiniteIntegral(name, integrand, variable, lower, upper,
                                               facts, properties, recorded))
     return found
+
+
+def licence_files() -> list[pathlib.Path]:
+    """The licence files kept with the fetched tests (none for a copy
+    fetched file by file from a mirror)."""
+    root = cache_directory() / 'maxima' / 'repository'
+    return [root / name for name in LICENCE_FILES if (root / name).is_file()]
 
 
 def fetch(collections: Sequence[str] = COLLECTIONS) -> list[tuple[str, str]]:
