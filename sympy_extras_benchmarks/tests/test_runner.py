@@ -59,3 +59,5 @@ def test_state_of_a_killed_worker(tmp_path: pathlib.Path) -> None:
     log = output.with_suffix('.workers.log').read_text()
     assert 'STATE alarm timer:' in log
     assert 'runner_work.py' in log
+    # the C-level dump of faulthandler as well
+    assert 'Current thread' in log or 'Stack (most recent call first)' in log

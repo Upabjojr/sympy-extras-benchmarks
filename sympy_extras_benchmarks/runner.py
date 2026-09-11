@@ -24,6 +24,7 @@ whatever the computation itself prints goes to the worker's log instead.
 from __future__ import annotations
 
 import argparse
+import faulthandler
 import importlib
 import json
 import os
@@ -201,6 +202,10 @@ def _report_state(signum: int, frame: Optional[FrameType]) -> None:
 def _serve(module_name: str, memory: int) -> int:
     """The loop of a worker: one task per line in, one result per line out."""
     signal.signal(signal.SIGUSR1, _report_state)
+    # the Python handler above only runs between bytecodes; a worker stuck
+    # in one long C call (a huge integer operation) still dumps its stack
+    # from faulthandler's C-level handler, which then chains to it
+    faulthandler.register(signal.SIGUSR1, file=sys.stderr, all_threads=False, chain=True)
     if memory > 0:
         limit = memory*2**20
         resource.setrlimit(resource.RLIMIT_AS, (limit, limit))
