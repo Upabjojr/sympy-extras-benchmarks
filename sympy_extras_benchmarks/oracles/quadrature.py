@@ -33,11 +33,13 @@ True
 from __future__ import annotations
 
 import random
+import re
 from typing import Callable, Optional
 
 import mpmath
 
 from sympy import Integer, Integral, Rational, S, Symbol, lambdify, oo, zoo
+from sympy.core.evalf import PrecisionExhausted
 from sympy.core.expr import Expr
 
 from sympy_extras._typing import as_expr
@@ -52,6 +54,8 @@ DIGITS = 30
 TOLERANCE = 1e-8
 #: the relative disagreement tolerated between the two quadrature rules
 _RULES_AGREE = 1e-10
+#: the most digits ``evalf`` may work with to reach :data:`DIGITS`
+_MAXN = 1000
 
 #: what goes wrong numerically: a function mpmath does not have, a
 #: domain error, an overflow
@@ -129,15 +133,41 @@ def quadrature(entry: DefiniteIntegral, values: dict[Symbol, Expr]) -> Optional[
         return None
 
 
+def _evaluated(value: Expr) -> Optional[complex]:
+    """``value`` to :data:`DIGITS` digits, or ``None`` when that accuracy is
+    out of reach.
+
+    A closed form can cancel catastrophically — ``exp(400)*(1 - erf(20))``
+    loses about 175 digits — and a plain ``evalf`` then returns a zero
+    whose error is larger than the value, printed ``0.e+31``. ``evalf`` is
+    asked for guaranteed digits first, with room to work at many more; when
+    it cannot guarantee them, the value either cancels to zero or is lost,
+    and only a zero known to be tiny is accepted.
+    """
+    try:
+        return complex(value.evalf(DIGITS, strict=True, maxn=_MAXN))
+    except PrecisionExhausted:
+        pass
+    loose = value.evalf(DIGITS, maxn=_MAXN)
+    for part in loose.as_real_imag():
+        zero = re.fullmatch(r"-?0\.e([+-]\d+)", str(part))
+        if zero is not None and int(zero.group(1)) > -10:
+            return None
+    return complex(loose)
+
+
 def numerical(value: Expr, values: dict[Symbol, Expr]) -> Optional[complex]:
     """``value`` at ``values``, or ``None`` when it is not a finite number
-    there (an unevaluated integral, a symbol left, an infinity)."""
+    there (an unevaluated integral, a symbol left, an infinity) or cannot be
+    evaluated accurately."""
     substituted = value.xreplace(values)
     if not isinstance(substituted, Expr) or substituted.has(Integral) or substituted.free_symbols:
         return None
     try:
-        number = complex(substituted.evalf(DIGITS))
+        number = _evaluated(substituted)
     except _NUMERICAL_ERRORS:
+        return None
+    if number is None:
         return None
     if number != number or abs(number) == float('inf'):
         return None

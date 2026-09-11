@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import random
 
-from sympy import (Catalan, Heaviside, I, Integer, Integral, Rational, Si, Symbol, exp,
-                   lowergamma, oo, pi, sqrt, uppergamma)
+from sympy import (Catalan, Heaviside, I, Integer, Integral, Rational, Si, Symbol, cos, erf,
+                   exp, lowergamma, oo, pi, sin, sqrt, uppergamma)
 from sympy.core.expr import Expr
 
 from sympy_extras._typing import as_expr
 
 from sympy_extras_benchmarks.datasets.integrals import DefiniteIntegral
 from sympy_extras_benchmarks.drivers.definite_integrals import (
-    assumed_symbols, check, wolfram_query)
+    _claims_divergence, assumed_symbols, check, wolfram_query)
 from sympy_extras_benchmarks.oracles.quadrature import agree, numerical, quadrature, sample
 from sympy_extras_benchmarks.oracles.wolfram import number, to_wolfram
 
@@ -123,3 +123,21 @@ def test_the_question_asked_of_mathematica() -> None:
     assert wolfram_query(entry, {a: Rational(3, 2)}) == (
         'NIntegrate[Exp[((-3/2)*sympyx)], {sympyx, 0, Infinity}, '
         'WorkingPrecision -> 20, MaxRecursion -> 20]')
+
+
+def test_a_catastrophic_cancellation_is_evaluated_accurately() -> None:
+    # exp(400)*(1 - erf(20)) loses about 175 digits; a plain evalf(30)
+    # returns a zero with an error of 1e31
+    value = exp(a**2)*(1 - erf(a))
+    assert agree(numerical(value, {a: Integer(20)}), 0.0281743487410513193)
+
+
+def test_an_exact_zero_is_a_zero() -> None:
+    assert numerical(sin(a)**2 + cos(a)**2 - 1, {a: Integer(1)}) == 0
+
+
+def test_a_result_stating_divergence() -> None:
+    assert _claims_divergence('oo') and _claims_divergence('-Si(1) + oo')
+    assert _claims_divergence('nan')
+    assert not _claims_divergence('AccumBounds(-1, 1)')
+    assert not _claims_divergence('log(foo) + 2')

@@ -56,6 +56,7 @@ import argparse
 import json
 import pathlib
 import random
+import re
 import sys
 from typing import Callable, Optional
 
@@ -233,17 +234,29 @@ def wolfram_query(entry: DefiniteIntegral, values: dict[Symbol, Expr]) -> str:
         to_wolfram(entry.lower.xreplace(values)), to_wolfram(entry.upper.xreplace(values)))
 
 
+def _claims_divergence(result: str) -> bool:
+    """Whether a result states an infinite or undefined value (``oo``,
+    ``zoo``, ``nan``), rather than oscillation (``AccumBounds``)."""
+    return re.search(r"\b(oo|zoo|nan)\b", result) is not None and 'AccumBounds' not in result
+
+
 def _second_opinions(results: list[Result], entries: dict[str, DefiniteIntegral],
                      oracle: Wolfram, cache: pathlib.Path) -> dict[str, str]:
     """Mathematica's verdict on every ``unchecked`` or ``WRONG`` result:
     ``'ok'``, ``'WRONG'`` or ``'undecided'``; answers already in ``cache``
-    are not asked again."""
+    are not asked again.
+
+    Every sample is asked about: a result is ``WRONG`` when Mathematica
+    disagrees at one of them, ``ok`` when it agrees wherever it answers. A
+    result stating that the integral diverges (``oo``, ``nan``) is
+    ``WRONG`` when Mathematica computes a value there without a warning.
+    """
     known: dict[str, str] = {}
     if cache.exists():
         loaded = json.loads(cache.read_text())
         if isinstance(loaded, dict):
             known = {str(k): str(v) for k, v in loaded.items()}
-    questions: list[tuple[str, complex]] = []
+    questions: list[tuple[str, Optional[complex]]] = []
     expressions: list[str] = []
     for result in results:
         name = str(result['id'])
@@ -253,12 +266,13 @@ def _second_opinions(results: list[Result], entries: dict[str, DefiniteIntegral]
         checked = result.get('checked')
         if entry is None or not isinstance(checked, list):
             continue
+        divergent = _claims_divergence(str(result.get('result')))
         for record in checked:
             if not isinstance(record, dict):
                 continue
             ours = _unpair(record.get('result'))
             values = record.get('values')
-            if ours is None or not isinstance(values, dict):
+            if (ours is None and not divergent) or not isinstance(values, dict):
                 continue
             try:
                 expressions.append(wolfram_query(entry, {Symbol(k): as_expr(sympify(str(v)))
@@ -266,20 +280,25 @@ def _second_opinions(results: list[Result], entries: dict[str, DefiniteIntegral]
             except WolframError:
                 break
             questions.append((name, ours))
-            break
     if questions:
-        print("\nasking Mathematica about %d results..." % len(questions), flush=True)
+        print("\nasking Mathematica %d questions..." % len(questions), flush=True)
         try:
             answers = oracle.evaluate(expressions)
         except WolframError as error:
             print("the oracle failed: %s" % error)
             answers = []
+        verdicts: dict[str, set[str]] = {}
         for (name, ours), text in zip(questions, answers):
             theirs = number(text)
             if theirs is None:
-                known[name] = 'undecided'
+                verdict = 'undecided'
+            elif ours is None:
+                verdict = 'WRONG'           # a value where the result says there is none
             else:
-                known[name] = 'ok' if agree(ours, theirs, WOLFRAM_TOLERANCE) else 'WRONG'
+                verdict = 'ok' if agree(ours, theirs, WOLFRAM_TOLERANCE) else 'WRONG'
+            verdicts.setdefault(name, set()).add(verdict)
+        for name, found in verdicts.items():
+            known[name] = 'WRONG' if 'WRONG' in found else 'ok' if 'ok' in found else 'undecided'
         cache.write_text(json.dumps(known, indent=1))
     return known
 
