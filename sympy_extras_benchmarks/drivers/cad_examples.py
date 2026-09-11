@@ -35,10 +35,11 @@ import pathlib
 import random
 import sys
 import time
-from typing import Optional
+from typing import Optional, Sequence
 
 from sympy import S, Rational, Symbol, srepr, true, false
 from sympy.core.basic import Basic
+from sympy.core.expr import Expr
 from sympy.logic.boolalg import Boolean
 
 from sympy_extras.assumptions import resolve, satisfiable
@@ -48,7 +49,7 @@ from sympy_extras_benchmarks.datasets import bath_cad, qepcad_tests, tarski_test
 from sympy_extras_benchmarks.datasets.qepcad_syntax import (
     Example, InputFailure, QEPCADSyntaxError, UnsupportedSyntax, parse_formula, parse_inputs)
 from sympy_extras_benchmarks.drivers.smtlib_release import call, category, check_model, evaluate
-from sympy_extras_benchmarks.runner import Result, Task, run
+from sympy_extras_benchmarks.runner import JSON, Result, Task, run
 
 #: the number of random points a formula is compared at
 POINTS = 200
@@ -159,14 +160,68 @@ def _cells(task: Task, result: Result, timeout: float) -> None:
         outcome = call(lambda: cylindrical_algebraic_decomposition(example.polynomials, gens), timeout)
         result['cad_time'] = round(time.monotonic() - started, 2)
         result['order'] = [str(g) for g in gens]
-        if outcome.kind == 'value' and outcome.value is not None:
-            count = len(outcome.value) if isinstance(outcome.value, CAD) else 0
-            result['cells'] = count
-            result['verdict'] = 'cells'
-        else:
+        cad = outcome.value
+        if outcome.kind != 'value' or not isinstance(cad, CAD):
             result['verdict'] = outcome.label()
+            return
+        result['cells'] = len(cad)
+        checked = call(lambda: check_cells(cad, example.polynomials, gens, random.Random(str(task['name']))), timeout)
+        if checked.kind != 'value' or not isinstance(checked.value, dict):
+            result['verdict'] = 'cells (check %s)' % checked.label()
+            return
+        result.update(checked.value)
+        problems = []
+        if checked.value.get('missing'):
+            problems.append('the signs at %s are not the signs of any cell' % checked.value.get('missing_point'))
+        if checked.value.get('mislabelled'):
+            problems.append('cell %s has the signs %s at its sample point, not %s' % (
+                checked.value.get('mislabelled_cell'), checked.value.get('actual'), checked.value.get('recorded')))
+        result['verdict'] = 'WRONG (%s)' % '; '.join(problems) if problems else 'cells'
         return
     result['verdict'] = 'not found'
+
+
+def _sign(value: Basic) -> Optional[int]:
+    if not isinstance(value, Rational):
+        return None
+    return 1 if value > 0 else (-1 if value < 0 else 0)
+
+
+def check_cells(cad: CAD, polynomials: Sequence[Expr], gens: Sequence[Symbol], rng: random.Random,
+                points: int = 500) -> dict[str, JSON]:
+    """Two checks of a decomposition that do not use its construction.
+
+    Every point of space lies in a cell, so the signs of the polynomials at
+    a random point must be the signs of some cell: a sign vector missing
+    from the cells is a missing cell. And the signs a cell records must be
+    the signs of the polynomials at its sample point, which is checked for
+    the cells whose sample point is rational.
+    """
+    recorded = {tuple(int(s) for s in cell.signs) for cell in cad}
+    report: dict[str, JSON] = {'sign_conditions': len(recorded), 'missing': 0, 'mislabelled': 0,
+                               'rational_points': 0}
+    for _ in range(points):
+        point = {g: Rational(rng.randint(-40, 40), rng.randint(1, 7)) for g in gens}
+        signs = tuple(_sign(p.xreplace(point)) for p in polynomials)
+        if None in signs:
+            continue
+        if signs not in recorded:
+            report['missing'] = int(str(report['missing'])) + 1
+            report.setdefault('missing_point', {str(k): str(v) for k, v in point.items()})
+    for cell in cad:
+        coordinates = [Rational(c) if isinstance(c, Rational) else None for c in cell.point]
+        if any(c is None for c in coordinates):
+            continue
+        report['rational_points'] = int(str(report['rational_points'])) + 1
+        point = {g: c for g, c in zip(gens, coordinates) if c is not None}
+        actual = tuple(_sign(p.xreplace(point)) for p in polynomials)
+        expected = tuple(int(s) for s in cell.signs)
+        if actual != expected:
+            report['mislabelled'] = int(str(report['mislabelled'])) + 1
+            report.setdefault('mislabelled_cell', str(cell.index))
+            report.setdefault('actual', str(actual))
+            report.setdefault('recorded', str(expected))
+    return report
 
 
 def work(task: Task) -> Result:
@@ -174,6 +229,8 @@ def work(task: Task) -> Result:
     result: Result = {'collection': task['collection'], 'name': task['name']}
     timeout = float(str(task['timeout']))
     if task['question'] == 'cells':
+        result['title'] = task.get('title')
+        result['maple_cells'] = task.get('maple_cells')
         _cells(task, result, timeout)
         return result
     result['syntax'] = task['syntax']
