@@ -36,3 +36,14 @@ def test_mislabelled_cell() -> None:
     report = check_cells(cad, CIRCLE, [x, y], random.Random(0))
     assert report['mislabelled'] == 1
     assert report['recorded'] == '(-1,)' and report['actual'] == '(1,)'
+
+
+def test_free_variables_of_a_qepcad_input() -> None:
+    from sympy_extras_benchmarks.drivers.cad_examples import problem
+    a, b = symbols('a b')
+    # a declared count of 0 with no quantifier: every variable is free
+    _, free, _ = problem('qepcad', '[T]\n(x,y)\n0\n[x y = 1 \\/ y < 0].')
+    assert free == [x, y]
+    # the free ones come first in QEPCAD's order, the bound ones are left out
+    _, free, _ = problem('qepcad', '[Q]\n(b,a,x)\n2\n(E x)[a x^2 + b = 0].')
+    assert free == [b, a]

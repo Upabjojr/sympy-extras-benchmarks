@@ -64,10 +64,12 @@ def problem(syntax: str, text: str) -> tuple[Boolean, list[Symbol], Optional[Boo
         item = items[0][1]
         if isinstance(item, InputFailure):
             raise item.error
-        bound = set(item.variables[item.free:])
-        free = [v for v in item.variables[:item.free]]
-        extra = sorted((s for s in item.formula.free_symbols
-                        if isinstance(s, Symbol) and s not in bound and s not in free), key=str)
+        # the free variables are the ones no quantifier binds, whatever the
+        # declared count says: the TTICAD inputs of the Bath bank declare 0
+        # free variables and have no quantifier at all
+        occurring = item.formula.free_symbols
+        free = [v for v in item.variables if v in occurring]
+        extra = sorted((s for s in occurring if isinstance(s, Symbol) and s not in free), key=str)
         return item.formula, free + extra, item.assumptions
     formula = parse_formula(text)
     free = sorted((s for s in formula.free_symbols if isinstance(s, Symbol)), key=str)
