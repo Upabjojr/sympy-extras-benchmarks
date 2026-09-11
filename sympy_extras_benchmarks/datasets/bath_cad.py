@@ -140,8 +140,53 @@ def cell_counts() -> dict[str, tuple[int, list[str]]]:
                               check=True, capture_output=True, text=True, timeout=120).stdout
     except (OSError, subprocess.SubprocessError):
         return {}
+    return _read_counts(text)
+
+
+def _read_counts(text: str) -> dict[str, tuple[int, list[str]]]:
+    """The cell counts of the text of the PDF, with the variable order (in
+    Maple's order, greatest first) they were achieved with; the order is
+    empty when the PDF does not say. Each example is a section headed
+    ``n.m Title``, and a count is read only inside its own section, since
+    several examples leave it blank. The order is the bracketed list after
+    "variable ordering", or the "Suggested variable order" of the section
+    when the count was achieved with it.
+
+    >>> from sympy_extras_benchmarks.datasets.bath_cad import _read_counts
+    >>> text = '''2.1  Parabola
+    ...    Suggested variable order: x > c > b > a.
+    ...    Best achieved number of cells: 27 - with Maple and variable ordering
+    ... [x,c,b,a] (that is, x > c > b > a).
+    ... 2.2  Umbrella
+    ...    Best achieved number of cells:
+    ...    Source: [CMXY09]
+    ... 2.3  Solotareff
+    ...    Suggested variable order: v > u > b > r > a
+    ...    Best achieved number of cells: 207 (Maple with suggested ordering).
+    ...    Source: [Ach56]
+    ... 2.4  Other
+    ...    Best achieved number of cells: 12
+    ... '''
+    >>> for title, value in sorted(_read_counts(text).items()):
+    ...     print(title, value)
+    other (12, [])
+    parabola (27, ['x', 'c', 'b', 'a'])
+    solotareff (207, ['v', 'u', 'b', 'r', 'a'])
+    """
     counts: dict[str, tuple[int, list[str]]] = {}
-    for title, count, order in re.findall(
-            r'^\d+\.\d+\s+([^\n]+?)\s*$.*?number of cells:\s*(\d+)[^\[]*\[([^\]]*)\]', text, re.M | re.S):
-        counts.setdefault(title.strip().lower(), (int(count), [v.strip() for v in order.split(',')]))
+    headings = list(re.finditer(r'^\s*\d+\.\d+\s+(\S[^\n]*?)\s*$', text, re.M))
+    for index, heading in enumerate(headings):
+        end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
+        section = text[heading.end():end]
+        count = re.search(r'number of cells:[ \t]*(\d+)', section)
+        if count is None:
+            continue
+        order: list[str] = []
+        stated = re.search(r'variable\s+ordering\s*\[([^\]]*)\]', section[count.start():])
+        suggested = re.search(r'Suggested variable order:[ \t]*([^\n]*)', section)
+        if stated is not None:
+            order = [v.strip() for v in stated.group(1).split(',') if v.strip()]
+        elif 'suggested' in section[count.start():count.start() + 200].lower() and suggested is not None:
+            order = [v.strip(' .') for v in suggested.group(1).split('>') if v.strip(' .')]
+        counts.setdefault(heading.group(1).strip().lower(), (int(count.group(1)), order))
     return counts
