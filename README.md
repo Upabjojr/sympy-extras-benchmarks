@@ -145,6 +145,24 @@ and timeouts are counted, not wrong.
 
 ## Results
 
+### Definite integrals (`definite_integrals`)
+
+SymPy 1.14's `integrate` and sympy-extras' `definite_integral` (commit 43f2064)
+on the 1141 integrals of `maxima_integrals`, `reduce_defint`,
+`fricas_integrals` and `holpy_integrals`, 30 s each, the unchecked results
+settled by Mathematica's `NIntegrate`:
+
+| | ok | ok (mathematica) | WRONG (mathematica) | unevaluated | no answer | crash |
+|---|---|---|---|---|---|---|
+| `integrate` | 533 | 149 | 34 | 221 | 74 | 1 |
+| `--extras` | 565 | 176 | 1 | 358 | 21 | 0 |
+
+The wrong answers of `integrate` are the branch cuts of its antiderivatives
+on the complex-valued FriCAS integrands; `definite_integral` keeps an answer
+of `integrate` only when the quadrature confirms it. Results in
+`results/defint_sympy114.wolfram.log` and `results/defint_extras4.wolfram.log`.
+
+
 Runs are not recorded here. What a given version of sympy-extras solved on
 a given machine within a given time limit is a measurement, not part of the
 datasets, and it goes stale as soon as either side changes; `results/` is
