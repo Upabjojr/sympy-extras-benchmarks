@@ -103,6 +103,11 @@ def run(tasks: Iterable[Task], module: str, output: pathlib.Path, workers: int =
     every new result. Returns all the results in ``output``, old and new.
     """
     output.parent.mkdir(parents=True, exist_ok=True)
+    if output.exists() and output.stat().st_size and not output.read_bytes().endswith(b'\n'):
+        # a run killed while writing left half a line: end it, so that the
+        # next result starts a line of its own instead of being glued to it
+        with open(output, 'a') as sink:
+            sink.write('\n')
     done = {str(r['id']) for r in load_results(output)}
     pending = [t for t in tasks if str(t['id']) not in done]
     pending.reverse()

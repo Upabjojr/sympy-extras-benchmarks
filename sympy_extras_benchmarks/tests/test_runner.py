@@ -35,3 +35,10 @@ def test_truncated_line(tmp_path: pathlib.Path) -> None:
     output = tmp_path / 'results.jsonl'
     output.write_text('{"id": "a", "v": 1}\n{"id": "b", "v"')
     assert [r['id'] for r in load_results(output)] == ['a']
+
+
+def test_resume_after_a_half_written_line(tmp_path: pathlib.Path) -> None:
+    output = tmp_path / 'results.jsonl'
+    output.write_text('{"id": "n0", "square": 0}\n{"id": "n1", "squ')
+    results = run([{'id': 'n%d' % n, 'n': n} for n in range(3)], MODULE, output, workers=1, deadline=60, memory=0)
+    assert sorted(str(r['id']) for r in results) == ['n0', 'n1', 'n2']
