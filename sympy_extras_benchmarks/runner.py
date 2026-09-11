@@ -65,6 +65,27 @@ def load_results(output: pathlib.Path) -> list[Result]:
     return results
 
 
+def memory_stall() -> Optional[float]:
+    """The seconds, since boot, during which every non-idle task of the
+    machine was stalled waiting for memory (the ``full`` line of
+    ``/proc/pressure/memory``); ``None`` where Linux does not report it.
+
+    The difference over a task tells a worker killed because the machine
+    was thrashing from one whose computation overran its time limit: a
+    swapped-out process cannot run its alarm handler either.
+    """
+    try:
+        text = pathlib.Path('/proc/pressure/memory').read_text()
+    except OSError:
+        return None
+    for line in text.splitlines():
+        if line.startswith('full'):
+            for field in line.split():
+                if field.startswith('total='):
+                    return int(field[len('total='):])/1e6
+    return None
+
+
 class _Worker:
     """One worker process and the task it is running."""
 
@@ -75,6 +96,7 @@ class _Worker:
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.log, text=True, bufsize=1)
         self.task: Optional[Task] = None
         self.started = 0.0
+        self.stall_at_start: Optional[float] = None
         self.done = 0
 
     @property
@@ -88,6 +110,7 @@ class _Worker:
         assert stream is not None
         self.task = task
         self.started = time.monotonic()
+        self.stall_at_start = memory_stall()
         stream.write(json.dumps(task) + '\n')
         stream.flush()
 
@@ -178,7 +201,11 @@ def run(tasks: Iterable[Task], module: str, output: pathlib.Path, workers: int =
                     if worker.process.poll() is None:
                         worker.process.send_signal(signal.SIGUSR1)
                         time.sleep(1.0)
-                    record({'id': task['id'], 'verdict': 'killed', 'time': round(now - worker.started, 2)})
+                    killed: Result = {'id': task['id'], 'verdict': 'killed', 'time': round(now - worker.started, 2)}
+                    stall = memory_stall()
+                    if stall is not None and worker.stall_at_start is not None:
+                        killed['memory_stall'] = round(stall - worker.stall_at_start, 2)
+                    record(killed)
                     retire(worker)
                     feed(spawn())
         for worker in list(pool):

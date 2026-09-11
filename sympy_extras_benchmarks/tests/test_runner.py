@@ -56,6 +56,12 @@ def test_memory(tmp_path: pathlib.Path) -> None:
 def test_state_of_a_killed_worker(tmp_path: pathlib.Path) -> None:
     output = tmp_path / 'results.jsonl'
     run([{'id': 'stuck', 'n': 1, 'sleep': 30}], MODULE, output, workers=1, deadline=2, memory=0)
+    killed = load_results(output)[0]
+    assert killed['verdict'] == 'killed'
+    # the machine's memory stall during the task, where Linux reports it
+    import pathlib as _pathlib
+    if _pathlib.Path('/proc/pressure/memory').exists():
+        assert isinstance(killed['memory_stall'], float) and killed['memory_stall'] >= 0
     log = output.with_suffix('.workers.log').read_text()
     assert 'STATE alarm timer:' in log
     assert 'runner_work.py' in log
