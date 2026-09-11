@@ -56,6 +56,15 @@ T = TypeVar('T')
 #: the time limit on reading one file
 PARSE_TIMEOUT = 60.0
 
+#: the time limit on checking a result (evaluating a model, comparing at points)
+CHECK_TIMEOUT = 60.0
+
+
+def step(name: str, what: str) -> None:
+    """Note on the worker's log which step of which problem starts, so that
+    a worker killed at the hard deadline shows where it was."""
+    print('STEP %s %s' % (name, what), file=sys.stderr, flush=True)
+
 
 class Outcome:
     """How a call ended: ``kind`` is ``'value'``, ``'timeout'``,
@@ -146,6 +155,7 @@ def _float(task: Task, key: str) -> float:
 
 
 def _qf_nra(text: str, name: str, task: Task, result: Result) -> None:
+    step(name, 'parse')
     parsed = call(lambda: smtlib.translate(text, name), PARSE_TIMEOUT)
     problem = parsed.value
     if parsed.kind != 'value' or not isinstance(problem, smtlib.Problem):
@@ -157,6 +167,7 @@ def _qf_nra(text: str, name: str, task: Task, result: Result) -> None:
         status = override
     result.update({'status': status, 'variables': len(variables),
                    'relations': len(formula.atoms(Relational))})
+    step(name, 'satisfiable')
     started = time.monotonic()
     outcome = call(lambda: satisfiable(formula, domain=S.Reals), _float(task, 'timeout'))
     result['sat_time'] = round(time.monotonic() - started, 2)
@@ -165,7 +176,10 @@ def _qf_nra(text: str, name: str, task: Task, result: Result) -> None:
     elif outcome.value is False:
         verdict = 'ok' if status == 'unsat' else ('WRONG (unsat for a sat problem)' if status == 'sat' else 'unsat')
     elif isinstance(outcome.value, dict):
-        check = check_model(formula, variables, outcome.value)
+        model = outcome.value
+        step(name, 'check the model')
+        checked = call(lambda: check_model(formula, variables, model), CHECK_TIMEOUT)
+        check = str(checked.value) if checked.kind == 'value' else 'uncheckable'
         result['model'] = {str(k): str(v)[:200] for k, v in outcome.value.items()}
         if check == 'fails':
             verdict = 'WRONG (the model does not satisfy the formula)'
@@ -181,13 +195,17 @@ def _qf_nra(text: str, name: str, task: Task, result: Result) -> None:
         return
     rng = random.Random(name)
     limit = _float(task, 'rewrite_timeout')
-    result['simplify'] = rewrite_verdict(formula, variables, status,
-                                         call(lambda: simplify(formula, domain=S.Reals), limit), rng)
-    result['refine'] = rewrite_verdict(formula, variables, status,
-                                       call(lambda: refine(formula, domain=S.Reals), limit), rng)
+    for key, function in (('simplify', simplify), ('refine', refine)):
+        step(name, key)
+        rewritten = call(lambda: function(formula, domain=S.Reals), limit)
+        step(name, 'check ' + key)
+        judged = call(lambda: rewrite_verdict(formula, variables, status, rewritten, rng), CHECK_TIMEOUT)
+        result[key] = str(judged.value) if judged.kind == 'value' else '%s (check %s)' % (
+            rewritten.label() if rewritten.kind != 'value' else 'returned', judged.label())
 
 
 def _nra(text: str, name: str, task: Task, result: Result) -> None:
+    step(name, 'parse')
     parsed = call(lambda: solver_regressions.translate(text, name), PARSE_TIMEOUT)
     problem = parsed.value
     if parsed.kind != 'value' or not isinstance(problem, solver_regressions.ArithProblem):
@@ -199,6 +217,7 @@ def _nra(text: str, name: str, task: Task, result: Result) -> None:
         closed = as_boolean(Exists(problem.variables, problem.formula))
     result.update({'status': status, 'variables': len(problem.variables),
                    'relations': len(problem.formula.atoms(Relational))})
+    step(name, 'resolve')
     started = time.monotonic()
     outcome = call(lambda: resolve(closed, domain=problem.domain), _float(task, 'timeout'))
     result['resolve_time'] = round(time.monotonic() - started, 2)

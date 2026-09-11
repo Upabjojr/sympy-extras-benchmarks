@@ -48,7 +48,7 @@ from sympy_extras.polys.cad import CAD, cylindrical_algebraic_decomposition
 from sympy_extras_benchmarks.datasets import bath_cad, qepcad_tests, tarski_tests
 from sympy_extras_benchmarks.datasets.qepcad_syntax import (
     Example, InputFailure, QEPCADSyntaxError, UnsupportedSyntax, parse_formula, parse_inputs)
-from sympy_extras_benchmarks.drivers.smtlib_release import call, category, check_model, evaluate
+from sympy_extras_benchmarks.drivers.smtlib_release import CHECK_TIMEOUT, call, category, check_model, evaluate
 from sympy_extras_benchmarks.runner import JSON, Result, Task, run
 
 #: the number of random points a formula is compared at
@@ -140,7 +140,9 @@ def _satisfiable(result: Result, formula: Boolean, free: list[Symbol], timeout: 
     elif outcome.value is False:
         result['verdict'] = 'unsat'
     elif isinstance(outcome.value, dict):
-        check = check_model(formula, free, outcome.value)
+        model = outcome.value
+        checked = call(lambda: check_model(formula, free, model), CHECK_TIMEOUT)
+        check = str(checked.value) if checked.kind == 'value' else 'uncheckable'
         result['model'] = {str(k): str(v)[:200] for k, v in outcome.value.items()}
         result['verdict'] = 'WRONG (the model does not satisfy the formula)' if check == 'fails' else (
             'sat' if check == 'verified' else 'sat (model uncheckable)')
