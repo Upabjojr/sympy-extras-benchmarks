@@ -51,3 +51,11 @@ def test_memory(tmp_path: pathlib.Path) -> None:
     # the worker which ran out of memory reports it and is replaced
     assert results['exhaust']['verdict'] == 'memory'
     assert results['after']['square'] == 16
+
+
+def test_state_of_a_killed_worker(tmp_path: pathlib.Path) -> None:
+    output = tmp_path / 'results.jsonl'
+    run([{'id': 'stuck', 'n': 1, 'sleep': 30}], MODULE, output, workers=1, deadline=2, memory=0)
+    log = output.with_suffix('.workers.log').read_text()
+    assert 'STATE alarm timer:' in log
+    assert 'runner_work.py' in log

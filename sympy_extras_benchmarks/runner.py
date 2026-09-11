@@ -30,10 +30,12 @@ import os
 import pathlib
 import resource
 import selectors
+import signal
 import subprocess
 import sys
 import time
 import traceback
+from types import FrameType, FunctionType
 from typing import IO, Callable, Iterable, Optional, Union
 
 __all__ = ['JSON', 'Task', 'Result', 'run', 'load_results']
@@ -172,6 +174,9 @@ def run(tasks: Iterable[Task], module: str, output: pathlib.Path, workers: int =
             for worker in list(pool):
                 task = worker.task
                 if task is not None and now - worker.started > deadline:
+                    if worker.process.poll() is None:
+                        worker.process.send_signal(signal.SIGUSR1)
+                        time.sleep(1.0)
                     record({'id': task['id'], 'verdict': 'killed', 'time': round(now - worker.started, 2)})
                     retire(worker)
                     feed(spawn())
@@ -180,8 +185,22 @@ def run(tasks: Iterable[Task], module: str, output: pathlib.Path, workers: int =
     return load_results(output)
 
 
+def _report_state(signum: int, frame: Optional[FrameType]) -> None:
+    """Write where the worker is and the state of its alarm timer to its log
+    (the parent asks for it before killing a worker at the deadline)."""
+    remaining, interval = signal.getitimer(signal.ITIMER_REAL)
+    handler = signal.getsignal(signal.SIGALRM)
+    name = handler.__qualname__ if isinstance(handler, FunctionType) else repr(handler)
+    lines = ['STATE alarm timer: %.3f s left (interval %.3f); SIGALRM handler: %s' % (remaining, interval, name)]
+    lines.extend('STATE ' + line.rstrip() for entry in traceback.format_stack(frame)[-40:]
+                 for line in entry.splitlines())
+    sys.stderr.write('\n'.join(lines) + '\n')
+    sys.stderr.flush()
+
+
 def _serve(module_name: str, memory: int) -> int:
     """The loop of a worker: one task per line in, one result per line out."""
+    signal.signal(signal.SIGUSR1, _report_state)
     if memory > 0:
         limit = memory*2**20
         resource.setrlimit(resource.RLIMIT_AS, (limit, limit))
