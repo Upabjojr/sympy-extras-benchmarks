@@ -97,6 +97,8 @@ Integrator = Callable[[Expr, tuple[Symbol, Expr, Expr]], Expr]
 SAMPLES = 2
 #: the agreement asked of Mathematica's NIntegrate, which works at 20 digits
 WOLFRAM_TOLERANCE = 1e-6
+#: the results whose questions go to Mathematica together
+_WOLFRAM_BATCH = 16
 
 
 def _default(integrand: Expr, limits: tuple[Symbol, Expr, Expr]) -> Expr:
@@ -282,13 +284,21 @@ def _second_opinions(results: list[Result], entries: dict[str, DefiniteIntegral]
             questions.append((name, ours))
     if questions:
         print("\nasking Mathematica %d questions..." % len(questions), flush=True)
+    # a batch of results at a time, the answers saved after each, so that an
+    # interrupted run loses one batch at most; the questions about one result
+    # stay in one batch
+    names = list(dict.fromkeys(name for name, _ in questions))
+    for start in range(0, len(names), _WOLFRAM_BATCH):
+        batch = set(names[start:start + _WOLFRAM_BATCH])
+        chosen = [i for i, (name, _) in enumerate(questions) if name in batch]
         try:
-            answers = oracle.evaluate(expressions)
+            answers = oracle.evaluate([expressions[i] for i in chosen])
         except WolframError as error:
             print("the oracle failed: %s" % error)
-            answers = []
+            break
         verdicts: dict[str, set[str]] = {}
-        for (name, ours), text in zip(questions, answers):
+        for i, text in zip(chosen, answers):
+            name, ours = questions[i]
             theirs = number(text)
             if theirs is None:
                 verdict = 'undecided'
@@ -300,6 +310,8 @@ def _second_opinions(results: list[Result], entries: dict[str, DefiniteIntegral]
         for name, found in verdicts.items():
             known[name] = 'WRONG' if 'WRONG' in found else 'ok' if 'ok' in found else 'undecided'
         cache.write_text(json.dumps(known, indent=1))
+        print("  %d of %d results settled" % (min(start + _WOLFRAM_BATCH, len(names)), len(names)),
+              flush=True)
     return known
 
 
