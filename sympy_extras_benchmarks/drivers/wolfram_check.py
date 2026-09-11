@@ -36,6 +36,7 @@ import sys
 from typing import Optional
 
 from sympy import Symbol, sympify, true, false
+from sympy.core.basic import Basic
 from sympy.logic.boolalg import Boolean, Equivalent, Implies
 
 from sympy_extras.assumptions import Exists, ForAll
@@ -90,6 +91,37 @@ def _smt_problem(identifier: str) -> Optional[tuple[Boolean, list[Symbol], str]]
     if arith is None:
         return None
     return arith.formula, list(arith.variables), arith.status
+
+
+def instance_questions(result: Result, points: int = 6) -> list[Question]:
+    """When the equivalence of a quantifier-free result with its problem is
+    too hard for Mathematica, decide the problem at a few random rational
+    values of the free variables instead: at each, Mathematica's truth
+    value of the closed instance must be the value of the result there,
+    which is evaluated exactly here. This cannot prove the equivalence, but
+    one disagreement disproves it."""
+    import random
+    from sympy import Rational
+    from sympy_extras_benchmarks.drivers.smtlib_release import evaluate
+    formula, free, assumptions = problem(str(result['syntax']), str(result['text']))
+    ours = sympify(str(result['result_srepr']))
+    if not isinstance(ours, Boolean) or not free:
+        return []
+    rng = random.Random(str(result['id']))
+    asked: list[Question] = []
+    tries = 0
+    while len(asked) < points and tries < 50*points:
+        tries += 1
+        point: dict[Basic, Basic] = {v: Rational(rng.randint(-12, 12), rng.randint(1, 4)) for v in free}
+        if assumptions is not None and evaluate(assumptions, point) is not True:
+            continue
+        value = evaluate(ours, point)
+        if value is None:
+            continue
+        instance = as_boolean(formula.xreplace(point))
+        label = ','.join('%s=%s' % (k, v) for k, v in point.items())
+        asked.append(Question(str(result['id']), 'instance ' + label, "Resolve[%s, Reals]" % to_wolfram(instance), value))
+    return asked
 
 
 def questions(result: Result) -> list[Question]:
@@ -149,12 +181,25 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument('--timeout', type=float, default=120.0)
     parser.add_argument('--chunk', type=int, default=10)
     parser.add_argument('--limit', type=int, default=0)
+    parser.add_argument('--instances', action='store_true',
+                        help='for the equivalences Mathematica left undecided, check random instances instead')
     parser.add_argument('--output', default='')
     args = parser.parse_args(argv)
     source = pathlib.Path(args.results)
     output = pathlib.Path(args.output or str(source).replace('.jsonl', '.wolfram.jsonl'))
-    done = {str(r['id']) for r in load_results(output)}
+    earlier = load_results(output)
+    done = {str(r['id']) for r in earlier}
     pending: list[Question] = []
+    if args.instances:
+        undecided = {str(r['id']) for r in earlier if r.get('kind') == 'equivalent' and r.get('agrees') is None}
+        undecided -= {str(r['id']) for r in earlier if str(r.get('kind', '')).startswith('instance')}
+        for result in load_results(source):
+            if str(result['id']) in undecided:
+                try:
+                    pending.extend(instance_questions(result))
+                except (WolframError, ValueError, TypeError, SyntaxError, QEPCADSyntaxError) as error:
+                    print("%s: no instances (%s)" % (result['id'], error))
+        done = {str(r['id']) for r in load_results(source)}
     for result in load_results(source):
         if str(result['id']) in done:
             continue

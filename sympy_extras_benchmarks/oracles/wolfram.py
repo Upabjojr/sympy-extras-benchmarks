@@ -51,7 +51,7 @@ from sympy.core.singleton import S
 
 from sympy_extras.assumptions import ForAll, Quantifier
 
-__all__ = ['WolframError', 'to_wolfram', 'Wolfram']
+__all__ = ['WolframError', 'wolfram_name', 'to_wolfram', 'Wolfram']
 
 #: the prefix which keeps SymPy names away from Mathematica's built-ins
 PREFIX = 'sympy'
@@ -78,6 +78,29 @@ FUNCTIONS: dict[str, str] = {
     'besselj': 'BesselJ', 'bessely': 'BesselY', 'besseli': 'BesselI', 'besselk': 'BesselK',
     'harmonic': 'HarmonicNumber', 'polygamma': 'PolyGamma', 'lowergamma': 'Gamma',
 }
+
+
+def wolfram_name(name: str) -> str:
+    """The Wolfram Language symbol standing for a SymPy symbol.
+
+    A Mathematica name is made of letters and digits only: ``_`` is a
+    pattern (``x__1`` reads as the pattern ``x__`` times ``1``) and ``$``
+    marks system names. Every other character is written as ``Z<code>Z``,
+    and ``Z`` itself as ``ZZ``, which keeps distinct names distinct.
+
+    >>> from sympy_extras_benchmarks.oracles.wolfram import wolfram_name
+    >>> wolfram_name('x'), wolfram_name('ts2_0__1'), wolfram_name('Zeta$1')
+    ('sympyx', 'sympyts2Z95Z0Z95ZZ95Z1', 'sympyZZetaZ36Z1')
+    """
+    encoded = []
+    for character in name:
+        if character == 'Z':
+            encoded.append('ZZ')
+        elif character.isascii() and character.isalnum():
+            encoded.append(character)
+        else:
+            encoded.append('Z%dZ' % ord(character))
+    return PREFIX + ''.join(encoded)
 
 
 def _binary(node: Basic, operator: str) -> str:
@@ -132,7 +155,7 @@ def to_wolfram(node: Basic) -> str:
     if isinstance(node, BooleanFalse):
         return "False"
     if isinstance(node, Symbol):
-        return PREFIX + node.name
+        return wolfram_name(node.name)
     if isinstance(node, Integer):
         return str(int(node))
     if isinstance(node, Rational):
