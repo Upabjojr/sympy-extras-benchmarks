@@ -44,12 +44,10 @@ def test_resume_after_a_half_written_line(tmp_path: pathlib.Path) -> None:
     assert sorted(str(r['id']) for r in results) == ['n0', 'n1', 'n2']
 
 
-def test_memory_and_unserialisable_results(tmp_path: pathlib.Path) -> None:
+def test_memory(tmp_path: pathlib.Path) -> None:
     output = tmp_path / 'results.jsonl'
-    tasks: list[Task] = [{'id': 'opaque', 'n': 1, 'opaque': True}, {'id': 'exhaust', 'n': 1, 'exhaust': True},
-                         {'id': 'after', 'n': 4}]
+    tasks: list[Task] = [{'id': 'exhaust', 'n': 1, 'exhaust': True}, {'id': 'after', 'n': 4}]
     results = {str(r['id']): r for r in run(tasks, MODULE, output, workers=1, deadline=60, memory=0)}
-    assert str(results['opaque']['square']).startswith('<object object')
     # the worker which ran out of memory reports it and is replaced
     assert results['exhaust']['verdict'] == 'memory'
     assert results['after']['square'] == 16

@@ -39,6 +39,9 @@ from typing import IO, Callable, Iterable, Optional, Union
 __all__ = ['JSON', 'Task', 'Result', 'run', 'load_results']
 
 JSON = Union[None, bool, int, float, str, list['JSON'], dict[str, 'JSON']]
+
+#: the exit code of a worker which ran out of memory between tasks
+MEMORY_EXIT = 75
 Task = dict[str, JSON]
 Result = dict[str, JSON]
 
@@ -151,7 +154,7 @@ def run(tasks: Iterable[Task], module: str, output: pathlib.Path, workers: int =
                     continue
                 if not line:
                     code = worker.process.wait()
-                    record({'id': task['id'], 'verdict': 'died', 'exit': code,
+                    record({'id': task['id'], 'verdict': 'memory' if code == MEMORY_EXIT else 'died', 'exit': code,
                             'time': round(time.monotonic() - worker.started, 2)})
                     retire(worker)
                     feed(spawn())
@@ -161,7 +164,7 @@ def run(tasks: Iterable[Task], module: str, output: pathlib.Path, workers: int =
                 result.setdefault('time', round(time.monotonic() - worker.started, 2))
                 record(result)
                 worker.done += 1
-                if worker.done >= recycle and pending:
+                if (worker.done >= recycle or result.get('verdict') == 'memory') and pending:
                     retire(worker)
                     worker = spawn()
                 feed(worker)
@@ -187,8 +190,14 @@ def _serve(module_name: str, memory: int) -> int:
     module = importlib.import_module(module_name)
     work: Callable[[Task], Result] = module.work
     from sympy.core.cache import clear_cache
-    for line in sys.stdin:
-        task: Task = json.loads(line)
+    while True:
+        try:
+            line = sys.stdin.readline()
+            if not line:
+                return 0
+            task: Task = json.loads(line)
+        except MemoryError:
+            return MEMORY_EXIT
         exhausted = False
         try:
             result = work(task)
@@ -209,7 +218,6 @@ def _serve(module_name: str, memory: int) -> int:
         channel.flush()
         if exhausted:
             return 0
-    return 0
 
 
 def main(argv: Optional[list[str]] = None) -> int:
