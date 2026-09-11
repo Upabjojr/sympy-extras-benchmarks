@@ -5,14 +5,17 @@ Usage::
 
     python -m sympy_extras_benchmarks definite_integrals
         [--sources maxima,reduce,fricas,holpy] [--collections a,b]
-        [--sample N] [--seed N] [--timeout S] [--meijerg]
+        [--sample N] [--seed N] [--timeout S] [--meijerg] [--extras]
         [--workers N] [--memory MB] [--output results.jsonl]
         [--wolfram COMMAND]
 
-sympy-extras has no integrator of its own, so this driver measures SymPy's
-``integrate``, which sympy-extras builds on: its default algorithm, or with
-``--meijerg`` the Meijer G-function method alone — the method of REDUCE's
-DEFINT and of Maxima's ``specint``, whose tests are two of the datasets.
+This driver measures SymPy's ``integrate``, which sympy-extras builds on:
+its default algorithm, or with ``--meijerg`` the Meijer G-function method
+alone — the method of REDUCE's DEFINT and of Maxima's ``specint``, whose
+tests are two of the datasets — and with ``--extras`` the definite
+integrator of sympy-extras (``sympy_extras.integrals.definite_integral``,
+the Marichev–Adamchik method with the facts of the source as assumptions,
+SymPy's ``integrate`` as its last resort).
 
 Each integral is computed with its parameters carrying what the source
 assumes about them (``a > 0`` becomes a positive symbol, a declared
@@ -60,11 +63,15 @@ import re
 import sys
 from typing import Callable, Optional
 
-from sympy import Ge, Gt, Integral, Le, Lt, Ne, Symbol, integrate, oo, sympify, zoo
+from sympy import Ge, Gt, Integral, Le, Lt, Ne, S, Symbol, integrate, oo, sympify, zoo
 from sympy.core.expr import Expr
 
+from sympy.logic.boolalg import Boolean
+
 from sympy_extras._timeout import attempt
-from sympy_extras._typing import as_expr
+from sympy_extras._typing import as_boolean, as_expr
+from sympy_extras.assumptions import element
+from sympy_extras.integrals import definite_integral
 
 from sympy_extras_benchmarks.datasets import (
     fricas_integrals, holpy_integrals, maxima_integrals, reduce_defint)
@@ -90,8 +97,9 @@ LICENCES: dict[str, tuple[str, Callable[[], list[pathlib.Path]]]] = {
     'holpy': (holpy_integrals.LICENCE, holpy_integrals.licence_files),
 }
 
-#: an integrator: the integrand and ``(variable, lower, upper)``
-Integrator = Callable[[Expr, tuple[Symbol, Expr, Expr]], Expr]
+#: an integrator: the integrand, ``(variable, lower, upper)`` and the
+#: facts about the parameters as statements
+Integrator = Callable[[Expr, tuple[Symbol, Expr, Expr], list[Boolean]], Expr]
 
 #: the number of samples of the parameters a result is checked at
 SAMPLES = 2
@@ -101,12 +109,19 @@ WOLFRAM_TOLERANCE = 1e-6
 _WOLFRAM_BATCH = 16
 
 
-def _default(integrand: Expr, limits: tuple[Symbol, Expr, Expr]) -> Expr:
+def _default(integrand: Expr, limits: tuple[Symbol, Expr, Expr], facts: list[Boolean]) -> Expr:
     return as_expr(integrate(integrand, limits))
 
 
-def _meijerg(integrand: Expr, limits: tuple[Symbol, Expr, Expr]) -> Expr:
+def _meijerg(integrand: Expr, limits: tuple[Symbol, Expr, Expr], facts: list[Boolean]) -> Expr:
     return as_expr(integrate(integrand, limits, meijerg=True))
+
+
+def _extras(integrand: Expr, limits: tuple[Symbol, Expr, Expr], facts: list[Boolean]) -> Expr:
+    return definite_integral(integrand, limits, facts)
+
+
+INTEGRATORS: dict[str, Integrator] = {'default': _default, 'meijerg': _meijerg, 'extras': _extras}
 
 
 def _pair(value: Optional[complex]) -> JSON:
@@ -152,6 +167,18 @@ def assumed_symbols(entry: DefiniteIntegral) -> dict[Symbol, Symbol]:
     return replacement
 
 
+def statements(entry: DefiniteIntegral, replacement: dict[Symbol, Symbol]) -> list[Boolean]:
+    """The facts and properties of the entry as statements on the
+    (replaced) parameters, the assumptions of sympy-extras."""
+    facts: list[Boolean] = [as_boolean(f.xreplace(replacement)) for f in entry.facts]
+    domains = {'integer': S.Integers, 'real': S.Reals}
+    for symbol, prop in entry.properties:
+        s = replacement.get(symbol, symbol)
+        if prop in domains:
+            facts.append(element(s, domains[prop]))
+    return facts
+
+
 def check(entry: DefiniteIntegral, rng: random.Random, timeout: float,
           integrator: Integrator = _default) -> Result:
     """Compute ``entry`` with ``integrator`` and check the result.
@@ -164,8 +191,9 @@ def check(entry: DefiniteIntegral, rng: random.Random, timeout: float,
     integrand = as_expr(entry.integrand.xreplace(replacement))
     limits = (entry.variable, as_expr(entry.lower.xreplace(replacement)),
               as_expr(entry.upper.xreplace(replacement)))
+    facts = statements(entry, replacement)
     try:
-        value = attempt(lambda: integrator(integrand, limits), timeout)
+        value = attempt(lambda: integrator(integrand, limits, facts), timeout)
     except RecursionError:
         value = None
     result: Result = {'result': None if value is None else str(value)[:2000]}
@@ -222,7 +250,7 @@ def work(task: Task) -> Result:
         return {'verdict': 'missing'}
     timeout = task['timeout']
     seed = task['seed']
-    integrator = _meijerg if task['meijerg'] else _default
+    integrator = INTEGRATORS[str(task['integrator'])]
     rng = random.Random('%s/%s/%s' % (seed, source, name))
     return check(entry, rng, float(timeout) if isinstance(timeout, (int, float)) else 30.0,
                  integrator)
@@ -332,6 +360,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--timeout', type=float, default=30.0)
     parser.add_argument('--meijerg', action='store_true')
+    parser.add_argument('--extras', action='store_true')
     parser.add_argument('--workers', type=int, default=4)
     parser.add_argument('--memory', type=int, default=2048)
     parser.add_argument('--output', default='results/definite_integrals.jsonl')
@@ -357,7 +386,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             name = '%s/%s' % (source, entry.name)
             entries[name] = entry
             tasks.append({'id': name, 'source': source, 'name': entry.name,
-                          'timeout': args.timeout, 'seed': args.seed, 'meijerg': args.meijerg})
+                          'timeout': args.timeout, 'seed': args.seed,
+                          'integrator': 'extras' if args.extras else 'meijerg' if args.meijerg else 'default'})
     if not tasks:
         print("no integral could be fetched")
         return 1

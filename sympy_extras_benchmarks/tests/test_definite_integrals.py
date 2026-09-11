@@ -7,6 +7,7 @@ import random
 from sympy import (Catalan, Heaviside, I, Integer, Integral, Rational, Si, Symbol, cos, erf,
                    exp, lowergamma, oo, pi, sin, sqrt, uppergamma)
 from sympy.core.expr import Expr
+from sympy.logic.boolalg import Boolean
 
 from sympy_extras._typing import as_expr
 
@@ -73,7 +74,7 @@ def test_a_right_result_and_a_right_recorded_value() -> None:
 def test_a_wrong_result_is_caught() -> None:
     entry = DefiniteIntegral('t:8', exp(-a*x), x, 0, oo, facts=[a > 0])
 
-    def wrong(integrand: Expr, limits: tuple[Symbol, Expr, Expr]) -> Expr:
+    def wrong(integrand: Expr, limits: tuple[Symbol, Expr, Expr], facts: list[Boolean]) -> Expr:
         # twice the value, in the positive symbol the driver integrates with
         parameter, = integrand.free_symbols - {limits[0]}
         return 2/as_expr(parameter)
@@ -91,10 +92,10 @@ def test_a_wrong_recorded_value_is_a_finding_about_the_source() -> None:
 def test_an_unevaluated_result_and_no_answer() -> None:
     entry = DefiniteIntegral('t:10', exp(-x**4), x, 0, 1)
 
-    def unevaluated(integrand: Expr, limits: tuple[Symbol, Expr, Expr]) -> Expr:
+    def unevaluated(integrand: Expr, limits: tuple[Symbol, Expr, Expr], facts: list[Boolean]) -> Expr:
         return Integral(integrand, limits)
 
-    def gives_up(integrand: Expr, limits: tuple[Symbol, Expr, Expr]) -> Expr:
+    def gives_up(integrand: Expr, limits: tuple[Symbol, Expr, Expr], facts: list[Boolean]) -> Expr:
         raise NotImplementedError
 
     assert check(entry, random.Random(1), 30.0, unevaluated)['verdict'] == 'unevaluated'
@@ -143,3 +144,17 @@ def test_a_result_stating_divergence() -> None:
     assert _claims_divergence('nan')
     assert not _claims_divergence('AccumBounds(-1, 1)')
     assert not _claims_divergence('log(foo) + 2')
+
+
+def test_the_extras_integrator_and_the_statements() -> None:
+    from sympy import Symbol, exp, oo, sin
+    from sympy_extras_benchmarks.drivers.definite_integrals import INTEGRATORS, statements, assumed_symbols
+    x, a = Symbol('x'), Symbol('a')
+    entry = DefiniteIntegral('demo:extras', exp(-a * x) * sin(x) / x, x, 0, oo, facts=[a > 0],
+                             properties=[(a, 'real')])
+    replacement = assumed_symbols(entry)
+    facts = statements(entry, replacement)
+    # the sign fact is a statement, the property a membership
+    assert len(facts) == 2
+    result = check(entry, random.Random(1), 30.0, INTEGRATORS['extras'])
+    assert result['verdict'] == 'ok', result
