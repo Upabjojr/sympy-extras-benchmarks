@@ -228,12 +228,18 @@ def work(task: Task) -> Result:
                  integrator)
 
 
-def wolfram_query(entry: DefiniteIntegral, values: dict[Symbol, Expr]) -> str:
+def wolfram_query(entry: DefiniteIntegral, values: dict[Symbol, Expr],
+                  symbolic: bool = False) -> str:
     """Mathematica's ``NIntegrate`` of ``entry`` at ``values``, at 20
-    digits (a complex range is the straight segment in both systems)."""
-    return "NIntegrate[%s, {%s, %s, %s}, WorkingPrecision -> 20, MaxRecursion -> 20]" % (
-        to_wolfram(entry.integrand.xreplace(values)), to_wolfram(entry.variable),
-        to_wolfram(entry.lower.xreplace(values)), to_wolfram(entry.upper.xreplace(values)))
+    digits (a complex range is the straight segment in both systems); with
+    ``symbolic``, ``Integrate`` evaluated to 20 digits instead, which
+    reports a divergent integral where ``NIntegrate`` may return a number
+    (the principal value, or a truncation) without a warning."""
+    arguments = (to_wolfram(entry.integrand.xreplace(values)), to_wolfram(entry.variable),
+                 to_wolfram(entry.lower.xreplace(values)), to_wolfram(entry.upper.xreplace(values)))
+    if symbolic:
+        return "N[Integrate[%s, {%s, %s, %s}], 20]" % arguments
+    return "NIntegrate[%s, {%s, %s, %s}, WorkingPrecision -> 20, MaxRecursion -> 20]" % arguments
 
 
 def _claims_divergence(result: str) -> bool:
@@ -250,8 +256,9 @@ def _second_opinions(results: list[Result], entries: dict[str, DefiniteIntegral]
 
     Every sample is asked about: a result is ``WRONG`` when Mathematica
     disagrees at one of them, ``ok`` when it agrees wherever it answers. A
-    result stating that the integral diverges (``oo``, ``nan``) is
-    ``WRONG`` when Mathematica computes a value there without a warning.
+    result stating that the integral diverges (``oo``, ``nan``) is asked
+    of the symbolic ``Integrate``, and is ``WRONG`` when that finds a
+    finite value.
     """
     known: dict[str, str] = {}
     if cache.exists():
@@ -278,7 +285,8 @@ def _second_opinions(results: list[Result], entries: dict[str, DefiniteIntegral]
                 continue
             try:
                 expressions.append(wolfram_query(entry, {Symbol(k): as_expr(sympify(str(v)))
-                                                         for k, v in values.items()}))
+                                                         for k, v in values.items()},
+                                                 symbolic=ours is None))
             except WolframError:
                 break
             questions.append((name, ours))

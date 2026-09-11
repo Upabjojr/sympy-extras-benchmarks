@@ -123,6 +123,8 @@ def test_the_question_asked_of_mathematica() -> None:
     assert wolfram_query(entry, {a: Rational(3, 2)}) == (
         'NIntegrate[Exp[((-3/2)*sympyx)], {sympyx, 0, Infinity}, '
         'WorkingPrecision -> 20, MaxRecursion -> 20]')
+    assert wolfram_query(entry, {a: Rational(3, 2)}, symbolic=True) == (
+        'N[Integrate[Exp[((-3/2)*sympyx)], {sympyx, 0, Infinity}], 20]')
 
 
 def test_a_catastrophic_cancellation_is_evaluated_accurately() -> None:
