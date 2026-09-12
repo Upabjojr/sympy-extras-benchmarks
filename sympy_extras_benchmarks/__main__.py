@@ -28,6 +28,7 @@ DRIVERS: dict[str, str] = {
     'cad_examples': "resolve and satisfiable on the Bath CAD example bank and the tests of QEPCAD B and Tarski",
     'definite_integrals': "integrate on the definite integrals of Maxima, REDUCE's DEFINT, FriCAS and holpy, against quadrature",
     'wolfram_check': "settle with Mathematica the answers of smtlib_release and cad_examples no recorded answer confirms",
+    'region_integrals': "integrate_by_ranges on random regions, against sampling, the region split in two and the other variable order",
 }
 
 
