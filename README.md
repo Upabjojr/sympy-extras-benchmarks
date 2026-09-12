@@ -38,6 +38,7 @@ repository (see [Results](#results)).
 | `pde_symmetries` | Twelve classical PDEs (heat, Burgers, KdV, wave, nonlinear diffusion, Fisher, Boussinesq, Liouville, sine-Gordon, potential Burgers, Black-Scholes) with the dimension of their point symmetry algebra from Olver, Bluman-Kumei and Ibragimov's handbook | translated into SymPy expressions | 12 equations |
 | `polynomial_systems` | The Katsura-m and cyclic-m systems with their known invariants (dimension, number of solutions, radicality) | generated as SymPy expressions | Katsura 2-6, cyclic 3-7 |
 | `maxima_integrals` | Definite integrals and Laplace transforms from Maxima's test suite: the regression file of its definite integration (`rtestint`), the definite integrals of `rtest_integrate`, the definite integrals of **Wester's** *Critique*, and the Laplace transforms of `rtest_laplace` and of `specint` (`rtest_hypgeo`, from Abramowitz and Stegun 29.3 on: Bessel functions, incomplete gamma, `erf`, orthogonal polynomials), each with the facts in force when it runs | Maxima `.mac`, read with the expression parser of `maxima_ode`; the context (`assume`, `forget`, `kill`, `declare`, `assume_pos`, assigned variables) is followed through the file, and a transform is read as its integral over `(0, oo)` | 569 integrals: rtestint 194, rtest_integrate 50, wester 22, laplace 75, specint 228; 392 with a recorded value |
+| `indefinite_integrals` | Indefinite integrals with the facts in force and, where the source records one, a reference antiderivative: the two-argument `integrate` calls of Maxima's `rtest_integrate.mac` (exponentials, logarithms, radicals, trigonometric and hyperbolic functions), `rtestint.mac` (rational functions and algebraic radicals), `rtest14.mac` (Airy and Bessel functions), `rtest7.mac` and the indefinite integrals of **Wester's** *Critique*; and the `testIntegrate` assertions of FriCAS's `src/input/integ.input` (the regression cases of its integrator: Risch, Trager, the Abel and Masser–Zannier examples) with the `testEquals` references | Maxima `.mac`, read with the context-following reader of `maxima_integrals` (an assumption the reader does not translate is remembered by the names it mentions and released by its `forget`); FriCAS input, the string arguments of the assertions rewritten into Maxima syntax as for `fricas_integrals`; the `xf` (expected-failure) assertions assert nothing and are not read | 1165 integrals: rtest_integrate 757, rtestint 71, rtest14 20, wester 13, fricas_integ 304; 267 with a recorded antiderivative |
 | `reduce_defint` | The test file of **REDUCE's DEFINT** package (K. Gaskell, ZIB 1993–94). DEFINT integrates products of Meijer G-functions — the Adamchik–Marichev method, which is also SymPy's `meijerint` — and its tests are integrals over `(0, oo)` and `(0, y)` of powers, exponentials, Bessel functions, `Ei`, `Si`, `Shi` and `erf` | REDUCE `.tst`, rewritten into Maxima syntax as for `reduce_odes` | 93 calls, 92 read (the Fresnel one is refused) |
 | `fricas_integrals` | FriCAS's `mapleok.input`: definite integrals of logarithms, inverse hyperbolic functions, absolute values, real and imaginary parts, over infinite ranges and along complex segments | FriCAS input, rewritten into Maxima syntax; sparse clone of `fricas/fricas` | 252 statements, 231 distinct integrals |
 | `holpy_integrals` | The worked examples of **holpy** (Xu, Li and Zhan, *Verified Interactive Computation of Definite Integrals*, CADE 2021): the MIT Integration Bee (2013, 2014, 2019, 2020), Schaum's Outline and UC Davis exercises, and proved identities (Ahmed, Frullani, Dirichlet, Catalan, Wallis, beta and gamma, log-sine) with their conditions | holpy's JSON; the last line of a checked computation, or the other side of a proved goal, is the recorded value; sparse clone of `bzhan/holpy` | 249 integrals, 218 with a recorded value |
@@ -135,6 +136,7 @@ python -m sympy_extras_benchmarks presburger_random --cases 400 --seed 3
 | `maxima_limits` | Maxima's limit regression files | `limit` against Maxima's recorded value **and** Mathematica. Neither is an answer key — Maxima's limit code has its own bugs — so a `DIFFER` means sympy-extras and Mathematica disagree, and a `SUSPECT` means those two agree against Maxima. This is the driver that found #52 |
 | `polynomial_solving` | the systems of Maxima's `algsys` regression file | `solve` over the complexes; **every solution substituted back**, which is the hard check and the only one that counts as wrong; the number of solutions is compared with Mathematica's `Solve` and with the count Maxima records, and reported but not counted |
 | `definite_integrals` | the definite integrals of `maxima_integrals`, `reduce_defint`, `fricas_integrals` and `holpy_integrals` | SymPy's `integrate` (`--meijerg` forces the Meijer G method) or, with `--extras`, sympy-extras' `definite_integral` (the Marichev–Adamchik method, the facts of the source passed as statement assumptions, SymPy's `integrate` as its verified last resort) — with the facts of the source as assumptions, in parallel workers (`runner`). The result is evaluated at two samples of the parameters satisfying the facts and compared with numerical quadrature, trusted only when mpmath's tanh-sinh and Gauss-Legendre rules agree; a disagreement is `WRONG`. With `--wolfram COMMAND`, Mathematica's `NIntegrate` settles at the same sample every result the quadrature could not check, and every `WRONG` one. The source's recorded value is checked against the quadrature, and a wrong one is reported as `SOURCE`, a finding about the source. The licence of each dataset, and where its licence file is kept, is printed before the run |
+| `indefinite_integrals` | the indefinite integrals of `indefinite_integrals` | SymPy's `integrate(f, x)` or, with `--extras`, sympy-extras' indefinite integrator (`indefinite_integral` when the package has it, else the antiderivative behind its definite integrator) — with the facts of the source as assumptions, in parallel workers (`runner`). The result is checked by differentiation, never against the recorded antiderivative: `F' - f` simplified to `0`, or evaluated at random real points where the integrand is real; a nonzero value is `WRONG`, an `Integral` left is `unevaluated`, a raise is `crash`; a correct result whose `F(q) - F(p)` has an imaginary part between two real points with a convergent numerical integral is `nonreal` (a complex antiderivative a definite integral between real bounds gets wrong). With `--wolfram COMMAND`, Mathematica's `Integrate` supplies a reference where the source records none and its `N` settles the results the checks could not evaluate; the derivative check keeps the final word |
 | `polynomial_systems` | Katsura and cyclic systems | `Ideal.dimension`, `vector_space_dimension`, `is_radical` against the known values; FGLM against the Gröbner walk |
 | `solve_random` | random polynomial equations with sign assumptions; with `--transcendental N`, random equations in `exp`, `log`, `sin`, `cos`, `sqrt` | `solve` against `Poly.real_roots` or against sign changes on a fine grid refined with `nsolve` |
 | `verify_random` | a random sample of the collections | `solve_ode`; every solution verified with `checkodesol` and numerically; a solution failing the numerical check is `WRONG` |
@@ -163,6 +165,32 @@ on the complex-valued FriCAS integrands; `definite_integral` keeps an answer
 of `integrate` only when the quadrature confirms it. Results in
 `results/defint_sympy114.wolfram.log` and `results/defint_extras4.wolfram.log`.
 
+
+### Indefinite integrals (`indefinite_integrals`)
+
+SymPy 1.14's `integrate(f, x)` on the 1165 indefinite integrals of
+`indefinite_integrals`, 20 s each, four workers, every result checked by
+differentiation, the results the checks could not evaluate put to
+Mathematica (`--wolfram`) and its `Integrate` asked for a reference where
+the source records none:
+
+```
+python -m sympy_extras_benchmarks indefinite_integrals --timeout 20 --workers 4 \
+    --output results/indefinite_sympy114.jsonl \
+    --wolfram "ssh mathematica-host 'cat > /tmp/oracle.wl && wolframscript -file /tmp/oracle.wl'"
+```
+
+| correct | correct (mathematica) | WRONG | WRONG (mathematica) | unevaluated | no answer | unchecked | crash | killed |
+|---|---|---|---|---|---|---|---|---|
+| 299 | 1 | 8 | 2 | 617 | 208 | 21 | 6 | 3 |
+
+Nine of the ten wrong answers come from `meijerint_indefinite`, all
+antiderivatives valid for a positive variable only (`exp(-x**3)` as an
+incomplete gamma function, `1/(x*sqrt(x**2 + 1))` as `-asinh(1/x)`, two
+Bessel integrals as G-functions whose derivative has the opposite sign at
+negative `x`), one from `manualintegrate` (`nan`); the crashes are
+exceptions escaping `meijerint` and `heurisch`. Results in
+`results/indefinite_sympy114.wolfram.log`.
 
 Runs are not recorded here. What a given version of sympy-extras solved on
 a given machine within a given time limit is a measurement, not part of the
@@ -205,6 +233,8 @@ them before a run.
 | Maxima `tests/rtest_limit*.mac` — the limit regression files | as above | GPL-2.0 | the calls and the recorded values, the latter as a third opinion only | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
 | Maxima `tests/rtest_algsys.mac` — the `algsys` regression file | as above | GPL-2.0 | the systems and the unknowns; the recorded solutions are *counted* as a third opinion and are not the answer key | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
 | Maxima `tests/rtestint.mac`, `rtest_integrate.mac`, `rtest_laplace.mac`, `rtest_hypgeo.mac` and `wester_problems/test_definite_integrals.mac` — definite integrals and Laplace transforms | as above | GPL-2.0; Wester's problems were released under it by their author (`wester-gpl-permission-message.txt`) | the calls, the facts in force when they run, and the recorded values, the latter as a third opinion only | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
+| Maxima `tests/rtest_integrate.mac`, `rtestint.mac`, `rtest14.mac`, `rtest7.mac` and `wester_problems/test_indefinite_integrals.mac` — indefinite integrals | as above | GPL-2.0, Wester's problems as above | the two-argument calls, the facts in force, and the recorded antiderivatives, the latter as a third opinion only | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
+| FriCAS `src/input/integ.input` — indefinite integrals | sparse clone of `fricas/fricas` (`src/input`) | modified BSD (`LICENSE.txt`) | the integrands and variables of the `testIntegrate` assertions and the `testEquals` references; the `xf` expected failures and FriCAS's answers in comments are not read | `$SYMPY_EXTRAS_BENCHMARKS_FRICAS` |
 | TPTP `ARI` domain | [tptp.org](https://tptp.org) | distributed by Geoff Sutcliffe under TPTP's own terms; each problem is the work of the authors named in its header | the formulas and the recorded `Status` | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |
 | REDUCE `ODESolve` tests — the Postel–Zimmermann collection | [`reduce-algebra/reduce-algebra`](https://github.com/reduce-algebra/reduce-algebra) | *Reduce License*, a BSD 2-clause style licence (`LICENSE`) | the equations only. **REDUCE's solutions and code are not used** | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
 | REDUCE DEFINT tests — Gaskell's collection | [`reduce-algebra/reduce-algebra`](https://github.com/reduce-algebra/reduce-algebra), `packages/defint` | *Reduce License*, a BSD 2-clause style licence (`LICENSE`) | the four-argument `int` calls. **REDUCE's results (`defint.rlg`), the transforms and the code are not used** | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |

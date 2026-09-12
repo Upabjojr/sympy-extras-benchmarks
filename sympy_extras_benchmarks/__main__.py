@@ -27,6 +27,7 @@ DRIVERS: dict[str, str] = {
     'smtlib_release': "satisfiable, simplify, refine (QF_NRA) and resolve (NRA) on every problem of the SMT-LIB 2025 release, in parallel",
     'cad_examples': "resolve and satisfiable on the Bath CAD example bank and the tests of QEPCAD B and Tarski",
     'definite_integrals': "integrate on the definite integrals of Maxima, REDUCE's DEFINT, FriCAS and holpy, against quadrature",
+    'indefinite_integrals': "integrate on the indefinite integrals of Maxima's and FriCAS's tests, checked by differentiation",
     'wolfram_check': "settle with Mathematica the answers of smtlib_release and cad_examples no recorded answer confirms",
     'region_integrals': "integrate_by_ranges on random regions, against sampling, the region split in two and the other variable order",
 }
