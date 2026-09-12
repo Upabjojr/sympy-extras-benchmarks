@@ -99,13 +99,23 @@ def sample(integrand: Expr, condition: Boolean, variables: Sequence[Symbol], see
 
 
 def evaluated(result: object) -> Optional[float]:
-    """The number a result stands for, or ``None`` when it is not one."""
+    """The number a result stands for, or ``None`` when it is not one.
+
+    An integral of a real integrand over a real region is a real number,
+    but it may come back written with imaginary parts which cancel (sums
+    of hypergeometric and elliptic terms do), so a value whose imaginary
+    part is negligible is the real number it stands for. Without this such
+    an answer cannot be turned into a float and goes unchecked.
+    """
     if not isinstance(result, (Expr, IntegralByRanges)) or result.has(IntegralByRanges) or result.free_symbols:
         return None
     try:
-        return float(result.evalf(25))
+        value = complex(result.evalf(30))
     except (AttributeError, TypeError, ValueError):
         return None
+    if abs(value.imag) > 1e-18*max(1.0, abs(value.real)):
+        return None
+    return value.real
 
 
 def integral(integrand: Expr, condition: Boolean, variables: Sequence[Symbol],

@@ -31,6 +31,10 @@ def test_evaluated() -> None:
     assert evaluated(Integer(3)) == 3.0
     assert evaluated(x) is None            # not a number
     assert evaluated(None) is None
+    # imaginary parts which cancel: the value is the real number it stands for
+    from sympy import I, sqrt
+    assert evaluated(2 + I*(sqrt(2) - sqrt(2))) == 2.0
+    assert evaluated(2 + I) is None        # a genuinely complex value is not one
 
 
 def test_work_on_a_good_case() -> None:
