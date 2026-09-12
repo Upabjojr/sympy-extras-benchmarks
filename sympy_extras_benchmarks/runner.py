@@ -162,6 +162,8 @@ def run(tasks: Iterable[Task], module: str, output: pathlib.Path, workers: int =
     done = {str(r['id']) for r in load_results(output)}
     pending = [t for t in tasks if str(t['id']) not in done]
     pending.reverse()
+    #: the tasks already given a second chance after a worker was killed
+    retried: set[str] = set()
     logs = output.with_suffix('.workers.log')
     selector = selectors.DefaultSelector()
     pool: list[_Worker] = []
@@ -202,9 +204,17 @@ def run(tasks: Iterable[Task], module: str, output: pathlib.Path, workers: int =
                     continue
                 if not line:
                     code = worker.process.wait()
+                    retire(worker)
+                    if code < 0 and str(task['id']) not in retried:
+                        # something outside killed the worker (the out-of-memory
+                        # killer of the machine, a stop signal): the problem is
+                        # not at fault, so it goes back in the queue once
+                        retried.add(str(task['id']))
+                        pending.append(task)
+                        feed(spawn())
+                        continue
                     record({'id': task['id'], 'verdict': 'memory' if code == MEMORY_EXIT else 'died', 'exit': code,
                             'time': round(time.monotonic() - worker.started, 2)})
-                    retire(worker)
                     feed(spawn())
                     continue
                 result: Result = json.loads(line)

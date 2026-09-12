@@ -72,3 +72,13 @@ def test_state_of_a_killed_worker(tmp_path: pathlib.Path) -> None:
     assert 'runner_work.py' in log
     # the C-level dump of faulthandler as well
     assert 'Current thread' in log or 'Stack (most recent call first)' in log
+
+
+def test_a_task_whose_worker_was_killed_is_tried_again(tmp_path: pathlib.Path) -> None:
+    output = tmp_path / 'results.jsonl'
+    marker = tmp_path / 'killed-once'
+    tasks: list[Task] = [{'id': 'signalled', 'n': 5, 'signal': str(marker)}, {'id': 'after', 'n': 2}]
+    results = {str(r['id']): r for r in run(tasks, MODULE, output, workers=1, deadline=60, memory=0)}
+    # the first attempt was killed from outside; the second one answers
+    assert results['signalled']['square'] == 25
+    assert results['after']['square'] == 4
