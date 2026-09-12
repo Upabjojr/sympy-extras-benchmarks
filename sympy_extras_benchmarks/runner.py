@@ -86,6 +86,28 @@ def memory_stall() -> Optional[float]:
     return None
 
 
+def signal_state(pid: int) -> dict[str, JSON]:
+    """What the kernel says about a process: which signals it blocks,
+    ignores and catches, its state and its CPU time.
+
+    A worker which does not answer SIGUSR1 and outruns its alarm may have
+    the signals blocked (``SigBlk``), or may not be running at all. Reading
+    this from ``/proc`` needs nothing of the worker itself.
+    """
+    state: dict[str, JSON] = {}
+    try:
+        for line in pathlib.Path('/proc/%d/status' % pid).read_text().splitlines():
+            name, _, value = line.partition(':')
+            if name in ('State', 'SigBlk', 'SigIgn', 'SigCgt', 'Threads', 'VmRSS'):
+                state[name] = value.strip()
+        fields = pathlib.Path('/proc/%d/stat' % pid).read_text().rsplit(') ', 1)[-1].split()
+        ticks = os.sysconf('SC_CLK_TCK')
+        state['cpu_seconds'] = round((int(fields[11]) + int(fields[12]))/ticks, 2)
+    except (OSError, IndexError, ValueError):
+        return state
+    return state
+
+
 class _Worker:
     """One worker process and the task it is running."""
 
@@ -202,6 +224,7 @@ def run(tasks: Iterable[Task], module: str, output: pathlib.Path, workers: int =
                         worker.process.send_signal(signal.SIGUSR1)
                         time.sleep(1.0)
                     killed: Result = {'id': task['id'], 'verdict': 'killed', 'time': round(now - worker.started, 2)}
+                    killed['signals'] = signal_state(worker.process.pid)
                     stall = memory_stall()
                     if stall is not None and worker.stall_at_start is not None:
                         killed['memory_stall'] = round(stall - worker.stall_at_start, 2)

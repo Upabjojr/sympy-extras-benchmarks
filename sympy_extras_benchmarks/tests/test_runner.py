@@ -58,6 +58,11 @@ def test_state_of_a_killed_worker(tmp_path: pathlib.Path) -> None:
     run([{'id': 'stuck', 'n': 1, 'sleep': 30}], MODULE, output, workers=1, deadline=2, memory=0)
     killed = load_results(output)[0]
     assert killed['verdict'] == 'killed'
+    # what the kernel said about the worker when it was killed
+    signals = killed['signals']
+    assert isinstance(signals, dict)
+    if pathlib.Path('/proc/self/status').exists():
+        assert set(signals) >= {'State', 'SigBlk', 'SigCgt', 'cpu_seconds'}
     # the machine's memory stall during the task, where Linux reports it
     import pathlib as _pathlib
     if _pathlib.Path('/proc/pressure/memory').exists():
