@@ -147,7 +147,10 @@ def _number(value: Expr, digits: int = 20) -> Optional[complex]:
 
 
 def _real(number: complex) -> bool:
-    return abs(number.imag) <= 1e-9 * (1 + abs(number.real))
+    # absolute, not relative: bessely(11, -3/7) is 2.6e13 + 2e-15*I, a
+    # complex number whose imaginary part a relative test would wave through,
+    # and an antiderivative right for x > 0 was then reported wrong there
+    return abs(number.imag) <= 1e-18
 
 
 def _agree(a: complex, b: complex) -> bool:

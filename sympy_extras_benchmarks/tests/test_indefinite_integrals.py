@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import random
 
-from sympy import I, Symbol, cos, exp, log, sin, sqrt
+from sympy import I, S, Symbol, besselk, cos, exp, log, meijerg, sin, sqrt
 from sympy.logic.boolalg import Boolean
 
 from sympy_extras._typing import as_boolean, as_expr
@@ -34,6 +34,17 @@ def test_a_varying_imaginary_part_is_nonreal_and_a_constant_one_is_not() -> None
     # from log(x); I*log(-I*x + sqrt(1 - x**2)) is asin(x), real
     assert _verify(1/x, log(x) + I*3) == 'correct'
     assert _verify(2*x, x**2 + I*x) == 'WRONG'
+
+
+def test_a_point_where_the_integrand_is_complex_is_no_test() -> None:
+    # besselk(7, x) at x < 0 is a complex number with a tiny imaginary
+    # part (-pi*besseli(7, x), 1e-28 of the real part), so an
+    # antiderivative right for x > 0 (SymPy's G-function form) is not
+    # wrong there: a relative tolerance on the imaginary part took the
+    # point as real and reported it wrong
+    G = -x*meijerg(((), (S(1)/2,)), ((-S(7)/2, -S(1)/2, S(7)/2), ()), x**2/4)/4
+    assert _verify(besselk(7, x), G) == 'correct'
+    assert _verify(besselk(7, x), -G) == 'WRONG'
 
 
 def test_parameters_take_the_facts() -> None:
