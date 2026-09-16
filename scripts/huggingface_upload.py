@@ -37,6 +37,11 @@ dataset modules when they are missing, and writes to
 dataset repositories, **private unless** ``--public`` is given, and sends
 each staged directory with ``upload_large_folder``, which resumes an
 interrupted upload. ``huggingface_hub`` is needed only for ``--upload``.
+
+The repositories are published under the ``Upabjojr`` namespace:
+https://huggingface.co/datasets/Upabjojr/smtlib-2025-nra,
+https://huggingface.co/datasets/Upabjojr/tarski-brown-vale-enriquez-2019 and
+https://huggingface.co/datasets/Upabjojr/z3test-nl-large.
 """
 from __future__ import annotations
 

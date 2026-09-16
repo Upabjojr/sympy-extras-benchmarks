@@ -36,10 +36,12 @@ files. Two more things are left out on purpose:
 * `solver-regressions-z3/regressions/nl/fastmul-unfolded-l-native-nl-wrapped.smt2`
   (13 MB) and `helperlemma-l-native-nl-wrapped.smt2` (9 MB), machine-generated
   files no benchmark can finish on. They are downloaded with the rest of
-  the tree when the cache is used;
+  the tree when the cache is used, and are on the Hub as
+  [`Upabjojr/z3test-nl-large`](https://huggingface.co/datasets/Upabjojr/z3test-nl-large);
 * the Brown–Vale-Enriquez data of `tarski` (`tests/dataset-Brown-V-E-2019`,
   139000 files, 623 MB), which `tarski_tests.brown_files` downloads into
-  the cache on first use.
+  the cache on first use, and which is on the Hub as
+  [`Upabjojr/tarski-brown-vale-enriquez-2019`](https://huggingface.co/datasets/Upabjojr/tarski-brown-vale-enriquez-2019).
 
 ## What is not kept here
 
@@ -48,7 +50,8 @@ never committed:
 
 * the **SMT-LIB 2025 release** in full (`smtlib_release`, 3.3 GB unpacked)
   — too large to keep, and only the Meti-Tarski family of it is used often
-  enough to be worth keeping, which is what `meti-tarski/` above is;
+  enough to be worth keeping, which is what `meti-tarski/` above is. Its
+  archives are on the Hub as [`Upabjojr/smtlib-2025-nra`](https://huggingface.co/datasets/Upabjojr/smtlib-2025-nra);
 * the **TPTP** `ARI` domain (`tptp_arithmetic`). TPTP is distributed by
   Geoff Sutcliffe under its own terms and its problems are the work of
   their individual authors; those terms are not a grant to redistribute
@@ -57,16 +60,27 @@ never committed:
 
 ## The large collections on the Hugging Face Hub
 
-`scripts/huggingface_upload.py` prepares the three collections left out for
-their size — the SMT-LIB 2025 `QF_NRA` and `NRA` archives, the
-Brown–Vale-Enriquez data of Tarski and the two large `z3test` files — as one
-Hugging Face dataset repository each, since each has its own licence: the
-files unchanged in their source language (the 139000 Brown–Vale-Enriquez
-files packed into two `.tar.zst`), the upstream licence text, a dataset card
-with the attribution, and `SHA256SUMS`. It stages into
-`.cache/huggingface-staging/` by default and uploads only with `--upload`,
-creating private repositories unless `--public` is given. TPTP is not among
-them: uploading it would be redistributing it.
+The three collections left out for their size are published on the Hugging
+Face Hub, one dataset repository each, since each has its own licence:
+
+| Hub dataset | Content | Licence | Size |
+|---|---|---|---|
+| [`Upabjojr/smtlib-2025-nra`](https://huggingface.co/datasets/Upabjojr/smtlib-2025-nra) | `QF_NRA.tar.zst` and `NRA.tar.zst` of the SMT-LIB 2025 release, byte for byte as on Zenodo | CC BY 4.0 | 202 MB |
+| [`Upabjojr/tarski-brown-vale-enriquez-2019`](https://huggingface.co/datasets/Upabjojr/tarski-brown-vale-enriquez-2019) | Tarski's `tests/dataset-Brown-V-E-2019`: `smtlib-r1` and `smtlib-r2` as two `.tar.zst` (19555 and 119395 SMT-LIB files), `round1inputs`, `round2inputs`, `README` | ISC | 71 MB |
+| [`Upabjojr/z3test-nl-large`](https://huggingface.co/datasets/Upabjojr/z3test-nl-large) | the two large files of `z3test`'s `regressions/nl`, at their own paths | MIT | 22 MB |
+
+Every repository keeps the files in their source language, unchanged but for
+the packing of the Brown–Vale-Enriquez trees (139000 loose files is more than a
+Hub repository should hold), with the upstream licence text, a dataset card
+giving the attribution, and `SHA256SUMS`. They are mirrors: the upstreams in
+the tables above remain the sources, and the datasets still download from
+those.
+
+`scripts/huggingface_upload.py` built them. It stages into
+`.cache/huggingface-staging/` and uploads only with `--upload`, creating
+private repositories unless `--public` is given; rerun it to refresh a
+repository after its upstream changes. TPTP is not among them: uploading it
+would be redistributing it.
 
 ## Refreshing a collection
 

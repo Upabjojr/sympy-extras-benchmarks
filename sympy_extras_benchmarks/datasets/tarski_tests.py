@@ -27,8 +27,11 @@ under Tarski's own licence, in ``data/tarski/`` with
 ``interpreter/LICENSE`` beside it (see ``data/README.md``), and is read
 from there, or from ``$SYMPY_EXTRAS_BENCHMARKS_TARSKI``. That data
 (139000 files, 623 MB) is too large to keep: :func:`brown_files` clones it
-sparsely into the cache on first use. Only the formulas and Tarski's
-recorded answers are read; no code of Tarski is used.
+sparsely into the cache on first use; it is also mirrored on the Hugging
+Face Hub as `Upabjojr/tarski-brown-vale-enriquez-2019
+<https://huggingface.co/datasets/Upabjojr/tarski-brown-vale-enriquez-2019>`_.
+Only the formulas and Tarski's recorded answers are read; no code of Tarski
+is used.
 """
 from __future__ import annotations
 

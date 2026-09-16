@@ -21,6 +21,10 @@ parsed by :mod:`~sympy_extras_benchmarks.datasets.smtlib` (``QF_NRA``) and
 :mod:`~sympy_extras_benchmarks.datasets.solver_regressions`
 (``NRA``, which has quantifiers); only the formulas and the ``:status``
 are read.
+
+The two archives are mirrored, unchanged, on the Hugging Face Hub as
+`Upabjojr/smtlib-2025-nra
+<https://huggingface.co/datasets/Upabjojr/smtlib-2025-nra>`_.
 """
 from __future__ import annotations
 

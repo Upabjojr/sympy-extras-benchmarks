@@ -232,6 +232,16 @@ first use into `.cache/` (or `$SYMPY_EXTRAS_BENCHMARKS_CACHE`), which is
 gitignored. A local copy of any of them can be pointed to with the environment
 variable in the last column, which is read before `data/`.
 
+The collections too large for `data/` are mirrored on the Hugging Face Hub, each
+in its source language with its licence and attribution:
+[`Upabjojr/smtlib-2025-nra`](https://huggingface.co/datasets/Upabjojr/smtlib-2025-nra) (the SMT-LIB 2025 `QF_NRA`
+and `NRA` archives, CC BY 4.0),
+[`Upabjojr/tarski-brown-vale-enriquez-2019`](https://huggingface.co/datasets/Upabjojr/tarski-brown-vale-enriquez-2019)
+(the Brown–Vale-Enriquez conjunctions of Tarski, ISC) and
+[`Upabjojr/z3test-nl-large`](https://huggingface.co/datasets/Upabjojr/z3test-nl-large) (two large `z3test`
+regressions, MIT). `scripts/huggingface_upload.py` builds and uploads them; see
+[`data/README.md`](data/README.md#the-large-collections-on-the-hugging-face-hub).
+
 The licence file of each upstream project is kept with its data, in `data/` and
 in the sparse clones alike. A dataset module names its licence and those files
 (`LICENCE`, `LICENCE_FILES`, `licence_files()` in the integration datasets), and

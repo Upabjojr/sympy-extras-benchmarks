@@ -48,6 +48,7 @@ sympy_extras_benchmarks/
     __main__.py              python -m sympy_extras_benchmarks DRIVER [options]
 data/                        the collections, in their own language, with their licences
 scripts/huggingface_upload.py  stages the collections too large for data/ and uploads them to the Hub
+                             (huggingface.co/datasets/Upabjojr/{smtlib-2025-nra,tarski-brown-vale-enriquez-2019,z3test-nl-large})
 results/                     runs written by --output, ignored by git
 .cache/                      what data/ does not keep: downloaded, ignored by git
 ```
@@ -76,11 +77,11 @@ results/                     runs written by --output, ignored by git
   | limit regression files (`maxima_limits`) | Maxima, `tests/` | GPL-2.0 | `data/maxima/` | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
   | Meti-Tarski `QF_NRA` (`smtlib`) | SMT-LIB 2025 release (Zenodo 16740866); `dreal/benchmarks` mirror as a fallback | CC BY 4.0 | `data/meti-tarski/` | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB` |
   | cvc5 regressions (`solver_regressions`) | `cvc5/cvc5` | modified BSD | `data/solver-regressions-cvc5/` | — |
-  | Z3 regressions (`solver_regressions`) | `Z3Prover/z3test` | MIT | `data/solver-regressions-z3/` | — |
-  | SMT-LIB 2025 `QF_NRA` and `NRA` (`smtlib_release`) | Zenodo record 16740866 | CC BY 4.0 | no: 3.3 GB | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB_RELEASE` |
+  | Z3 regressions (`solver_regressions`) | `Z3Prover/z3test` | MIT | `data/solver-regressions-z3/`; the two large files on the Hub, `Upabjojr/z3test-nl-large` | — |
+  | SMT-LIB 2025 `QF_NRA` and `NRA` (`smtlib_release`) | Zenodo record 16740866 | CC BY 4.0 | no: 3.3 GB; archives on the Hub, `Upabjojr/smtlib-2025-nra` | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB_RELEASE` |
   | Bath CAD example bank (`bath_cad`) | University of Bath Research Data Archive, doi:10.15125/BATH-00069 | CC BY-SA 4.0 | `data/bath-cad-examples/` | `$SYMPY_EXTRAS_BENCHMARKS_BATH_CAD` |
   | QEPCAD B tests (`qepcad_tests`) | `chriswestbrown/qepcad` | ISC-style | `data/qepcad/` | `$SYMPY_EXTRAS_BENCHMARKS_QEPCAD` |
-  | Tarski tests (`tarski_tests`) | `chriswestbrown/tarski` | ISC-style | `data/tarski/` (not the Brown data) | `$SYMPY_EXTRAS_BENCHMARKS_TARSKI` |
+  | Tarski tests (`tarski_tests`) | `chriswestbrown/tarski` | ISC-style | `data/tarski/`; the Brown data on the Hub, `Upabjojr/tarski-brown-vale-enriquez-2019` | `$SYMPY_EXTRAS_BENCHMARKS_TARSKI` |
   | mathlib4 tactic tests (`lean_tactics`) | `leanprover-community/mathlib4` | Apache-2.0 | `data/mathlib4/` | `$SYMPY_EXTRAS_BENCHMARKS_MATHLIB` |
   | Rocq micromega tests (`coq_micromega`) | `rocq-prover/stdlib` | LGPL-2.1 | `data/rocq-stdlib/` | `$SYMPY_EXTRAS_BENCHMARKS_ROCQ_STDLIB` |
   | TPTP `ARI` domain (`tptp_arithmetic`) | tptp.org, official distribution | TPTP's own terms; problems credited in their headers | no: TPTP's terms | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |

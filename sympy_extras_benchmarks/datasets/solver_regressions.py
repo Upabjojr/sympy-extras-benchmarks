@@ -92,7 +92,9 @@ and are read from there; ``$SYMPY_EXTRAS_BENCHMARKS_SOLVER_REGRESSIONS``
 names a directory to read instead, and a subtree in neither is cloned
 sparsely into the cache. Two machine-generated files of
 ``z3test``'s ``regressions/nl``, of 13 MB and 9 MB, are too large to keep
-and are only in the cache. Only the formulas and the recorded
+and are only in the cache, and mirrored on the Hugging Face Hub as
+`Upabjojr/z3test-nl-large
+<https://huggingface.co/datasets/Upabjojr/z3test-nl-large>`_. Only the formulas and the recorded
 ``sat``/``unsat`` answers are read.
 """
 from __future__ import annotations
