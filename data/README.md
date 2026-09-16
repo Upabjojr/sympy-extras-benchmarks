@@ -16,7 +16,7 @@ ships is kept with it.
 
 | Directory | Collection | Upstream | Version | Licence |
 |---|---|---|---|---|
-| `maxima/` | Kamke and Murphy ODEs (`contrib_ode`), and Maxima's regression files for integrals, limits and `algsys` | [Maxima](https://git.code.sf.net/p/maxima/code) | `d849baa` (2026-09-09) | GPL-2.0-or-later (`maxima/repository/COPYING`) |
+| `maxima/` | Kamke and Murphy ODEs (`contrib_ode`), and Maxima's regression files for integrals, limits and `algsys` | [Maxima](https://git.code.sf.net/p/maxima/code) | `d849baa` (2026-09-09) | GPL-2.0 (`maxima/repository/COPYING`) |
 | `reduce/` | the Postel–Zimmermann ODE suite and REDUCE's `odesolve` and `defint` tests | [reduce-algebra](https://github.com/reduce-algebra/reduce-algebra) | `3d29908` (2026-09-09) | BSD-2-clause style (`reduce/LICENSE`) |
 | `fricas/` | the integration inputs `integ.input` and `mapleok.input` | [fricas](https://github.com/fricas/fricas) | `46f4240` (2026-09-01) | modified BSD (`fricas/LICENSE.txt`) |
 | `holpy/` | the integral examples | [bzhan/holpy](https://github.com/bzhan/holpy) | `f36c1f0` (2023-02-25) | BSD-3-Clause (`holpy/LICENSE`) |

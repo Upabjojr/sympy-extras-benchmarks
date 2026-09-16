@@ -26,3 +26,101 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+-------------------------------------------------------------------------------
+Scope of this license: third-party datasets in data/
+-------------------------------------------------------------------------------
+
+The BSD 3-Clause License above applies only to the original code of this
+repository: everything outside the data/ directory.
+
+It does NOT apply to the contents of data/. That directory holds benchmark
+collections copied verbatim from other projects, and each keeps the license
+under which its authors published it. Using or redistributing those files
+means doing so under their own licenses, not under the license above. The
+license text (or, where the upstream ships none, a NOTICE with the license
+and the attribution) is kept beside each collection:
+
+  data/maxima/
+      Test files of Maxima (the Kamke and Murphy ODE collections, and the
+      regression files for integrals, limits and algsys; Wester's problems
+      released under the same license by their author).
+      https://git.code.sf.net/p/maxima/code
+      License:  GNU General Public License, version 2
+      Text:     data/maxima/repository/COPYING
+                data/maxima/repository/tests/wester_problems/
+                  wester-gpl-permission-message.txt
+
+  data/reduce/
+      Test files of REDUCE (the ODESolve and DEFINT packages).
+      https://github.com/reduce-algebra/reduce-algebra
+      License:  Reduce License (BSD 2-clause style)
+      Text:     data/reduce/LICENSE
+
+  data/fricas/
+      Input files of FriCAS (integ.input, mapleok.input).
+      Copyright (c) 2007-2026 The FriCAS Team, 2002-2007 The Axiom Team,
+      1991-2002 The Numerical Algorithms Group Ltd.
+      https://github.com/fricas/fricas
+      License:  modified BSD (3-clause)
+      Text:     data/fricas/LICENSE.txt
+
+  data/holpy/
+      Integral examples of holpy. Copyright (c) 2018 bhzhan.
+      https://github.com/bzhan/holpy
+      License:  BSD 3-Clause
+      Text:     data/holpy/LICENSE
+
+  data/rocq-stdlib/
+      The micromega test suite of the Rocq standard library.
+      https://github.com/rocq-prover/stdlib
+      License:  GNU Lesser General Public License, version 2.1
+      Text:     data/rocq-stdlib/LICENSE
+
+  data/mathlib4/
+      Tactic tests of Lean's mathlib4.
+      https://github.com/leanprover-community/mathlib4
+      License:  Apache License, version 2.0
+      Text:     data/mathlib4/LICENSE
+
+  data/tarski/
+      Test inputs of Tarski. Copyright (c) 2015 Chris Brown.
+      https://github.com/chriswestbrown/tarski
+      License:  ISC-style permissive license
+      Text:     data/tarski/interpreter/LICENSE
+
+  data/qepcad/
+      Regression tests and worked examples of QEPCAD B.
+      Copyright (c) 1990, 2008 Hoon Hong & Chris Brown.
+      https://github.com/chriswestbrown/qepcad
+      License:  ISC-style permissive license
+      Text:     data/qepcad/qesource/LICENSE
+
+  data/bath-cad-examples/
+      D. Wilson, Real Geometry and Connectedness via Triangular Description:
+      CAD Example Bank, version 4, University of Bath Research Data
+      Archive, 2013. https://researchdata.bath.ac.uk/69/
+      License:  Creative Commons Attribution-ShareAlike 4.0 International
+      Text:     data/bath-cad-examples/NOTICE
+
+  data/solver-regressions-z3/
+      Regression tests of Z3 (z3test). Copyright (c) Microsoft Corporation.
+      https://github.com/Z3Prover/z3test
+      License:  MIT
+      Text:     data/solver-regressions-z3/LICENSE.txt
+
+  data/solver-regressions-cvc5/
+      Regression tests of cvc5. Copyright (C) 2009-2026 by its authors and
+      contributors. https://github.com/cvc5/cvc5
+      License:  modified BSD (3-clause)
+      Text:     data/solver-regressions-cvc5/COPYING
+
+  data/meti-tarski/
+      The Meti-Tarski family of the SMT-LIB 2025 release (non-incremental
+      benchmarks), M. Preiner, H.-J. Schurr, C. Barrett, P. Fontaine,
+      A. Niemetz, C. Tinelli. doi:10.5281/zenodo.16740866
+      License:  Creative Commons Attribution 4.0 International
+      Text:     data/meti-tarski/NOTICE
+
+data/README.md lists the same collections with the upstream version each
+copy was taken from.
