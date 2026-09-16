@@ -61,11 +61,11 @@ Source and licence
 
 Maxima is distributed under the **GNU General Public License, version 2**;
 Wester's problems were released under the same licence by their author
-(``wester-gpl-permission-message.txt`` beside the file). Nothing of Maxima
-is stored in this repository: the files are fetched on first use into the
-cache directory, or read from ``$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS``.
-Only the calls, the facts and the recorded values are read; Maxima's code
-is not used.
+(``wester-gpl-permission-message.txt`` beside the file). The files are
+kept under that licence in ``data/maxima/`` (see ``data/README.md``) and
+read from there, or from ``$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS``, or
+from the cache when neither has them. Only the calls, the facts and the
+recorded values are read; Maxima's code is not used.
 
 Examples
 ========

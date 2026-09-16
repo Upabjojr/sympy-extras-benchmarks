@@ -38,10 +38,10 @@ Source and licence
 ==================
 
 REDUCE is distributed under the *Reduce License*, a **BSD 2-clause**
-style licence (``LICENSE`` in the repository). Nothing of it is stored in
-this repository: ``packages/defint`` is added on first use to the sparse
-clone of REDUCE in the cache directory, or read from
-``$SYMPY_EXTRAS_BENCHMARKS_REDUCE``.
+style licence. ``packages/defint`` is kept under it in ``data/reduce/``
+with REDUCE's ``LICENSE`` beside it (see ``data/README.md``) and read from
+there, or from ``$SYMPY_EXTRAS_BENCHMARKS_REDUCE``; if neither is there
+it is added to the sparse clone of REDUCE in the cache.
 
 Examples
 ========

@@ -48,12 +48,13 @@ Source and licence
 
 Maxima is distributed under the **GNU General Public License, version 2**
 (Wester's problems under the same licence by their author); FriCAS under
-the **modified (3-clause) BSD licence**. Nothing of either is stored in this
-repository: the files are fetched on first use into the cache directory
-(or read from ``$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS`` and
-``$SYMPY_EXTRAS_BENCHMARKS_FRICAS``). Only the calls, the facts and the
-recorded values are read; the systems' code and their test harnesses are
-not used.
+the **modified (3-clause) BSD licence**. Both sets of files are kept under
+those licences in ``data/maxima/`` and ``data/fricas/`` (see
+``data/README.md``) and read from there, or from
+``$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS`` and
+``$SYMPY_EXTRAS_BENCHMARKS_FRICAS``, or from the cache when neither has
+them. Only the calls, the facts and the recorded values are read; the
+systems' code and their test harnesses are not used.
 
 Examples
 ========

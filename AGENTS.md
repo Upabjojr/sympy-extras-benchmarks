@@ -13,7 +13,7 @@ specific to this repository follow.
 
 ```
 sympy_extras_benchmarks/
-    cache.py                 the cache directory of the downloaded data
+    cache.py                 where the collections are found: data/ first, then the cache
     datasets/
         maxima_ode.py        parser of Maxima's contrib_ode test files: Kamke and Murphy collections
         smtlib.py            SMT-LIB 2 parser (QF_NRA): the Meti-Tarski family
@@ -46,50 +46,65 @@ sympy_extras_benchmarks/
         quadrature.py        numerical quadrature for definite integrals, trusted when two mpmath rules agree
     drivers/                 one module per benchmark, each with main(argv) -> int
     __main__.py              python -m sympy_extras_benchmarks DRIVER [options]
+data/                        the collections, in their own language, with their licences
 results/                     runs written by --output, ignored by git
-.cache/                      downloaded data, ignored by git
+.cache/                      what data/ does not keep: downloaded, ignored by git
 ```
 
 ## Data and licenses
 
-- **Nothing downloaded is committed.** Every dataset is fetched on first use
-  into `.cache/` (or `$SYMPY_EXTRAS_BENCHMARKS_CACHE`), which is gitignored.
+- **The collections are kept in `data/`, in their own language.** Every
+  collection whose licence allows redistribution is committed there
+  verbatim — Maxima, REDUCE, SMT-LIB 2, Lean, Rocq, QEPCAD and Tarski
+  input, FriCAS input, holpy JSON — with the licence file of its upstream
+  beside it, so a checkout runs every benchmark without the network. The
+  parsers translate at load time; **nothing translated is committed**.
+  `data/README.md` is the index, and a new collection must be added to it.
+  What is *not* kept is fetched on first use into `.cache/` (or
+  `$SYMPY_EXTRAS_BENCHMARKS_CACHE`), which is gitignored: a collection is
+  left out only when it is too large (the SMT-LIB release, 3.3 GB; the
+  Brown--Vale-Enriquez data of Tarski, 623 MB; two machine-generated files
+  of `z3test`) or when its terms do not grant redistribution (TPTP).
   The upstream projects and their licences, each read from the licence file
   in the source tree:
 
-  | Source | Upstream | Licence | Local override |
-  |---|---|---|---|
-  | Kamke/Murphy collections (`maxima_ode`) | Maxima, SourceForge git, mirror `calyau/maxima` | GPL-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
-  | `algsys` regression file (`polynomial_solving`) | Maxima, `tests/` | GPL-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
-  | limit regression files (`maxima_limits`) | Maxima, `tests/` | GPL-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
-  | Meti-Tarski `QF_NRA` (`smtlib`) | `dreal/benchmarks` (mirror) | no licence file; SMT-LIB's own terms | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB` |
-  | cvc5 regressions (`solver_regressions`) | `cvc5/cvc5` | modified BSD | — |
-  | Z3 regressions (`solver_regressions`) | `Z3Prover/z3test` | MIT | — |
-  | SMT-LIB 2025 `QF_NRA` and `NRA` (`smtlib_release`) | Zenodo record 16740866 | CC BY 4.0 | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB_RELEASE` |
-  | Bath CAD example bank (`bath_cad`) | University of Bath Research Data Archive, doi:10.15125/BATH-00069 | CC BY-SA 4.0 | `$SYMPY_EXTRAS_BENCHMARKS_BATH_CAD` |
-  | QEPCAD B tests (`qepcad_tests`) | `chriswestbrown/qepcad` | ISC-style | `$SYMPY_EXTRAS_BENCHMARKS_QEPCAD` |
-  | Tarski tests (`tarski_tests`) | `chriswestbrown/tarski` | ISC-style | `$SYMPY_EXTRAS_BENCHMARKS_TARSKI` |
-  | mathlib4 tactic tests (`lean_tactics`) | `leanprover-community/mathlib4` | Apache-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MATHLIB` |
-  | Rocq micromega tests (`coq_micromega`) | `rocq-prover/stdlib` | LGPL-2.1 | `$SYMPY_EXTRAS_BENCHMARKS_ROCQ_STDLIB` |
-  | TPTP `ARI` domain (`tptp_arithmetic`) | tptp.org, official distribution | TPTP's own terms; problems credited in their headers | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |
-  | Postel-Zimmermann ODEs (`reduce_odes`) | `reduce-algebra/reduce-algebra` | Reduce License (BSD 2-clause style) | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
-  | integration and transform tests (`maxima_integrals`) | Maxima, `tests/` | GPL-2.0 | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
-  | DEFINT tests (`reduce_defint`) | `reduce-algebra/reduce-algebra` | Reduce License (BSD 2-clause style) | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
-  | `mapleok.input` (`fricas_integrals`) | `fricas/fricas` | modified BSD | `$SYMPY_EXTRAS_BENCHMARKS_FRICAS` |
-  | integral examples (`holpy_integrals`) | `bzhan/holpy` | BSD-3-Clause | `$SYMPY_EXTRAS_BENCHMARKS_HOLPY` |
+  | Source | Upstream | Licence | Kept in | Local override |
+  |---|---|---|---|---|
+  | Kamke/Murphy collections (`maxima_ode`) | Maxima, SourceForge git, mirror `calyau/maxima` | GPL-2.0 | `data/maxima/` | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
+  | `algsys` regression file (`polynomial_solving`) | Maxima, `tests/` | GPL-2.0 | `data/maxima/` | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
+  | limit regression files (`maxima_limits`) | Maxima, `tests/` | GPL-2.0 | `data/maxima/` | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
+  | Meti-Tarski `QF_NRA` (`smtlib`) | SMT-LIB 2025 release (Zenodo 16740866); `dreal/benchmarks` mirror as a fallback | CC BY 4.0 | `data/meti-tarski/` | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB` |
+  | cvc5 regressions (`solver_regressions`) | `cvc5/cvc5` | modified BSD | `data/solver-regressions-cvc5/` | — |
+  | Z3 regressions (`solver_regressions`) | `Z3Prover/z3test` | MIT | `data/solver-regressions-z3/` | — |
+  | SMT-LIB 2025 `QF_NRA` and `NRA` (`smtlib_release`) | Zenodo record 16740866 | CC BY 4.0 | no: 3.3 GB | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB_RELEASE` |
+  | Bath CAD example bank (`bath_cad`) | University of Bath Research Data Archive, doi:10.15125/BATH-00069 | CC BY-SA 4.0 | `data/bath-cad-examples/` | `$SYMPY_EXTRAS_BENCHMARKS_BATH_CAD` |
+  | QEPCAD B tests (`qepcad_tests`) | `chriswestbrown/qepcad` | ISC-style | `data/qepcad/` | `$SYMPY_EXTRAS_BENCHMARKS_QEPCAD` |
+  | Tarski tests (`tarski_tests`) | `chriswestbrown/tarski` | ISC-style | `data/tarski/` (not the Brown data) | `$SYMPY_EXTRAS_BENCHMARKS_TARSKI` |
+  | mathlib4 tactic tests (`lean_tactics`) | `leanprover-community/mathlib4` | Apache-2.0 | `data/mathlib4/` | `$SYMPY_EXTRAS_BENCHMARKS_MATHLIB` |
+  | Rocq micromega tests (`coq_micromega`) | `rocq-prover/stdlib` | LGPL-2.1 | `data/rocq-stdlib/` | `$SYMPY_EXTRAS_BENCHMARKS_ROCQ_STDLIB` |
+  | TPTP `ARI` domain (`tptp_arithmetic`) | tptp.org, official distribution | TPTP's own terms; problems credited in their headers | no: TPTP's terms | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |
+  | Postel-Zimmermann ODEs (`reduce_odes`) | `reduce-algebra/reduce-algebra` | Reduce License (BSD 2-clause style) | `data/reduce/` | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
+  | integration and transform tests (`maxima_integrals`) | Maxima, `tests/` | GPL-2.0 | `data/maxima/` | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
+  | DEFINT tests (`reduce_defint`) | `reduce-algebra/reduce-algebra` | Reduce License (BSD 2-clause style) | `data/reduce/` | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
+  | `mapleok.input` (`fricas_integrals`) | `fricas/fricas` | modified BSD | `data/fricas/` | `$SYMPY_EXTRAS_BENCHMARKS_FRICAS` |
+  | integral examples (`holpy_integrals`) | `bzhan/holpy` | BSD-3-Clause | `data/holpy/` | `$SYMPY_EXTRAS_BENCHMARKS_HOLPY` |
 
   Only the mathematical content is read: the equations of Kamke's and
   Murphy's books, the formulas and the `:status` of the SMT-LIB problems,
   the binders/hypotheses/conclusion of a Lean or Rocq goal. **Maxima's
   solutions and code are not used, and neither are the assistants'
   proofs.**
-- **The licence file travels with the data.** A sparse clone keeps the
-  files at the root of the repository, where the licence is; a module whose
-  fetch could lose it (a single file from a mirror) says so. The
+- **The licence file travels with the data.** Every directory of `data/`
+  holds the licence file its upstream ships (or a `NOTICE` giving the
+  licence and the attribution, where there is none to copy); a sparse clone
+  keeps the files at the root of the repository, where the licence is, and
+  a module whose fetch could lose it (a single file from a mirror) says
+  so. The
   integration datasets name the licence and its files (`LICENCE`,
   `LICENCE_FILES`, `licence_files()`), and their driver prints them.
-- **A new dataset must record its source and licence** in the table above
-  and in the `## Sources and licenses` table of `README.md`, together with
+- **A new dataset must record its source and licence** in the table above,
+  in `data/README.md` when its files are kept, and in the
+  `## Sources and licenses` table of `README.md`, together with
   what is read and what is deliberately not read. A source that is looked
   at and rejected goes in the "Surveyed and not used" table of `README.md`,
   with the reason, so that the ground is not covered twice.

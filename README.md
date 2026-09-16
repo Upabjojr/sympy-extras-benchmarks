@@ -5,13 +5,18 @@ This repository **translates the benchmark collections of
 expressions**. Every dataset the library is evaluated on reaches SymPy in
 one of two ways:
 
-- **parsers** for the collections which exist in a parsable format (they are
-  downloaded on first use, nothing of the files is stored here), and
+- **parsers** for the collections which exist in a parsable format: those
+  collections are kept in `data/`, in the language they are written in
+  (Maxima, REDUCE, SMT-LIB 2, Lean, Rocq, QEPCAD and Tarski input, FriCAS
+  input, holpy JSON), each with the licence of its upstream, and
 - **translations into SymPy expressions** of the tables which only existed
   as code.
 
-A dataset, once translated, is an ordinary sequence of SymPy objects: the
-equations, the formulas and the published answers, usable from any script.
+The translation happens when a dataset is loaded, never on disk: nothing
+in `data/` is SymPy, and a checkout runs every benchmark of the table
+below without touching the network. A dataset, once translated, is an
+ordinary sequence of SymPy objects: the equations, the formulas and the
+published answers, usable from any script.
 The drivers here are one such use, running the algorithms of sympy-extras
 over a dataset and checking the results against the recorded answers or an
 independent oracle. The numbers a run produces are not part of the
@@ -21,27 +26,27 @@ repository (see [Results](#results)).
 
 | Module (`sympy_extras_benchmarks.datasets`) | Data | Format and source | Size |
 |---|---|---|---|
-| `maxima_ode` | The Kamke collection of first and second order ODEs and the Murphy collection of first order ODEs (first degree and higher degree), as transcribed in the test suite of Maxima's `contrib_ode` | Maxima `.mac` test files, parsed by a recursive descent parser for Maxima expressions; sparse checkout of Maxima's git repository on SourceForge (GitHub mirror as fallback) | 1159 equations: kamke1 418, kamke2 422, murphy1 159, murphy2 160 |
-| `smtlib` | The Meti-Tarski family of SMT-LIB `QF_NRA` (proof obligations on polynomial bounds of special functions, each with its `:status`) | SMT-LIB 2 files, parsed to SymPy formulas; sparse clone of the `dreal/benchmarks` mirror on GitHub | 7713 problems (5025 sat, 2688 unsat), 3 to 8 real variables |
-| `solver_regressions` | The arithmetic problems of the cvc5 and Z3 regression suites: the cases which once broke a solver, over the **integers** as well as the reals and with quantifiers, each with the answer recorded in a `; EXPECT:` header or in `:status` | SMT-LIB 2 files, parsed to SymPy formulas (the s-expression reader of `smtlib` plus the integer sorts, `div`/`mod`/`abs`/`divisible` and the quantifiers); sparse clones of `cvc5/cvc5` and `Z3Prover/z3test` on GitHub | 1593 files, 316 arithmetic problems (166 with a recorded answer), 106 over the integers, 87 quantified |
+| `maxima_ode` | The Kamke collection of first and second order ODEs and the Murphy collection of first order ODEs (first degree and higher degree), as transcribed in the test suite of Maxima's `contrib_ode` | Maxima `.mac` test files, parsed by a recursive descent parser for Maxima expressions; kept in `data/maxima/` | 1159 equations: kamke1 418, kamke2 422, murphy1 159, murphy2 160 |
+| `smtlib` | The Meti-Tarski family of SMT-LIB `QF_NRA` (proof obligations on polynomial bounds of special functions, each with its `:status`) | SMT-LIB 2 files, parsed to SymPy formulas; kept in `data/meti-tarski/`, as the SMT-LIB 2025 release publishes the family | 7006 problems (4391 sat, 2615 unsat), 3 to 8 real variables |
+| `solver_regressions` | The arithmetic problems of the cvc5 and Z3 regression suites: the cases which once broke a solver, over the **integers** as well as the reals and with quantifiers, each with the answer recorded in a `; EXPECT:` header or in `:status` | SMT-LIB 2 files, parsed to SymPy formulas (the s-expression reader of `smtlib` plus the integer sorts, `div`/`mod`/`abs`/`divisible` and the quantifiers); kept in `data/solver-regressions-cvc5/` and `data/solver-regressions-z3/` (two machine-generated files of 13 MB and 9 MB are left in the cache) | 1591 files, 316 arithmetic problems (166 with a recorded answer), 106 over the integers, 87 quantified |
 | `smtlib_release` | **Every** problem of the SMT-LIB logics `QF_NRA` (16 families: Meti-Tarski, hycomp, LassoRanker, Sturm-MBO, Pine, Uncu, zankl, Economics-Mulligan, Geogebra, ...) and `NRA` (KeYmaera and two small families), each with its `:status` | SMT-LIB 2 files, parsed by `smtlib` (`QF_NRA`) and `solver_regressions` (`NRA`); the 2025 release on Zenodo (record 16740866), checked against its MD5 sums and unpacked with `tar --zstd` | `QF_NRA` 12154 problems (5257 sat, 5536 unsat, 1361 unknown); `NRA` 3819 (3806 unsat, 5 sat, 8 unknown) |
 | `qepcad_syntax` | The formula language of QEPCAD B and Tarski (implicit multiplication, `/\\`, `\\/`, `==>`, `(E x)`, `ex x [ ]`, ...) and QEPCAD's input dialogue | parser to SymPy formulas with the quantifiers of sympy-extras; QEPCAD's extended quantifiers (`F`, `G`, `C`, `X k`) and Tarski's `_root_` atoms are refused rather than approximated | — |
-| `bath_cad` | The **Bath CAD example bank** (Wilson, Bradford, Davenport, England): the classical QE problems (Collins, Hong, Davenport–Heintz, Kahan, Solotareff, the X-axis ellipse, motion planning, TTICAD, ...) with their suggested variable order and Maple's best cell count | QEPCAD inputs, a Maple file and a PDF, from the University of Bath Research Data Archive | 78 inputs (four malformed in the file itself, one repeated), 50 polynomial lists, 24 cell counts read from the PDF |
-| `qepcad_tests` | The regression tests and worked examples of **QEPCAD B** | QEPCAD inputs with QEPCAD's `sol T` answers; sparse clone of `chriswestbrown/qepcad` | 7 application problems (6 with an answer), 1000 random `(E y)[p(x, y) = 0]` of degree 6 (two of them corrupted in the file; the 2D-CAD set repeats all 1000), 9 worked examples |
-| `tarski_tests` | The tests of **Tarski**: GeoGebra Discovery's QE problems with Tarski's answers, the ISSAC 2015 NuCAD conjunctions, the formulas and unit tests of the interpreter, and the Brown–Vale-Enriquez conjunctions (disjuncts of Meti-Tarski problems) | Tarski formulas and SMT-LIB files; sparse clone of `chriswestbrown/tarski` | 181 GeoGebra (165 with an answer), 225 ISSAC (repeated in the 2017 suite), 8 interpreter, 19555 + 119395 Brown–Vale-Enriquez |
-| `lean_tactics` | The tactic tests of Lean's **mathlib4** for arithmetic (`linarith`, `positivity`), polynomial identities (`linear_combination`, `ring`) and numeral evaluation (`norm_num`), each with a machine-checked proof | Lean 4 `example` blocks, parsed to SymPy formulas by the grammar of `prover_syntax`; sparse clone of `leanprover-community/mathlib4` on GitHub | 13 files, 1573 examples, 443 usable goals of which 323 are not settled by SymPy's own evaluation |
-| `coq_micromega` | The **micromega** test suite of the Rocq/Coq standard library (`lia`, `nia`, `lra`, `psatz`): mostly nonlinear goals over `Z`, `Q`, `R` and `nat`, one file per historical bug, each closed by `Qed` | Rocq `Lemma`/`Goal` statements, parsed to SymPy formulas by the grammar of `prover_syntax`; sparse clone of `rocq-prover/stdlib` on GitHub | 38 files, 285 statements, 119 usable goals (none of them trivial), 105 over the integers |
+| `bath_cad` | The **Bath CAD example bank** (Wilson, Bradford, Davenport, England): the classical QE problems (Collins, Hong, Davenport–Heintz, Kahan, Solotareff, the X-axis ellipse, motion planning, TTICAD, ...) with their suggested variable order and Maple's best cell count | QEPCAD inputs, a Maple file and a PDF, from the University of Bath Research Data Archive; kept in `data/bath-cad-examples/` | 78 inputs (four malformed in the file itself, one repeated), 50 polynomial lists, 24 cell counts read from the PDF |
+| `qepcad_tests` | The regression tests and worked examples of **QEPCAD B** | QEPCAD inputs with QEPCAD's `sol T` answers; kept in `data/qepcad/` | 7 application problems (6 with an answer), 1000 random `(E y)[p(x, y) = 0]` of degree 6 (two of them corrupted in the file; the 2D-CAD set repeats all 1000), 9 worked examples |
+| `tarski_tests` | The tests of **Tarski**: GeoGebra Discovery's QE problems with Tarski's answers, the ISSAC 2015 NuCAD conjunctions, the formulas and unit tests of the interpreter, and the Brown–Vale-Enriquez conjunctions (disjuncts of Meti-Tarski problems) | Tarski formulas and SMT-LIB files; kept in `data/tarski/`, except the Brown–Vale-Enriquez data (623 MB), which is cloned into the cache | 181 GeoGebra (165 with an answer), 225 ISSAC (repeated in the 2017 suite), 8 interpreter, 19555 + 119395 Brown–Vale-Enriquez |
+| `lean_tactics` | The tactic tests of Lean's **mathlib4** for arithmetic (`linarith`, `positivity`), polynomial identities (`linear_combination`, `ring`) and numeral evaluation (`norm_num`), each with a machine-checked proof | Lean 4 `example` blocks, parsed to SymPy formulas by the grammar of `prover_syntax`; kept in `data/mathlib4/` | 13 files, 1573 examples, 443 usable goals of which 323 are not settled by SymPy's own evaluation |
+| `coq_micromega` | The **micromega** test suite of the Rocq/Coq standard library (`lia`, `nia`, `lra`, `psatz`): mostly nonlinear goals over `Z`, `Q`, `R` and `nat`, one file per historical bug, each closed by `Qed` | Rocq `Lemma`/`Goal` statements, parsed to SymPy formulas by the grammar of `prover_syntax`; kept in `data/rocq-stdlib/` | 38 files, 285 statements, 119 usable goals (none of them trivial), 105 over the integers |
 | `polynomial_solving` | The systems of Maxima's `algsys` regression file (`tests/rtest_algsys.mac`): the examples of Beyer (1984) and Morgan (1983), plus the ones that later broke `algsys` — positive-dimensional components, solutions real in the paper and complex in fact, and one where the published answer is wrong | Maxima `.mac`, read with the expression parser of `maxima_ode`; the recorded solutions are counted but are not the answer key | 51 systems, 1 to 13 equations, 1 to 6 unknowns |
 | `tptp_arithmetic` | The arithmetic (`ARI`) domain of the **TPTP** problem library: several hundred TFF problems over `$int` and `$real`, each with the `Status` its authors recorded. Written to be hard for provers rather than to exercise a tactic | TFF, parsed by a recursive descent parser for the arithmetic fragment; `Problems/ARI` extracted from the official distribution | 700 problems, 189 usable (179 `Theorem`, 10 `CounterSatisfiable`), 122 over the integers |
-| `reduce_odes` | The ODE test suite of **REDUCE**'s `ODESolve`, whose core is the **Postel–Zimmermann** collection — the equations of their 1996 review of the ODE solvers of seven computer algebra systems, chosen to tell systems apart | REDUCE `.tst`, rewritten into Maxima syntax (implicit multiplication, bracketless calls, `df`) and read with the parser of `maxima_ode` | 6 files, 233 `odesolve` calls, 88 usable equations of order 1 to 7 |
+| `reduce_odes` | The ODE test suite of **REDUCE**'s `ODESolve`, whose core is the **Postel–Zimmermann** collection — the equations of their 1996 review of the ODE solvers of seven computer algebra systems, chosen to tell systems apart | REDUCE `.tst`, rewritten into Maxima syntax (implicit multiplication, bracketless calls, `df`) and read with the parser of `maxima_ode`; kept in `data/reduce/` | 6 files, 233 `odesolve` calls, 88 usable equations of order 1 to 7 |
 | `maxima_limits` | Maxima's four limit regression files: the main one (a bug per entry), a larger collection, the examples of **Gruntz's 1996 thesis** — the algorithm modern CAS limits come from — and the limit problems of **Wester's** *Critique of the Mathematical Abilities of CA Systems* | Maxima `.mac`, read with the expression parser of `maxima_ode`; a call while an `assume` is in force is refused, as are `und` and `ind` | 4 files, ~1070 calls, 354 usable limits (300 with a recorded value) |
 | `pde_symmetries` | Twelve classical PDEs (heat, Burgers, KdV, wave, nonlinear diffusion, Fisher, Boussinesq, Liouville, sine-Gordon, potential Burgers, Black-Scholes) with the dimension of their point symmetry algebra from Olver, Bluman-Kumei and Ibragimov's handbook | translated into SymPy expressions | 12 equations |
 | `polynomial_systems` | The Katsura-m and cyclic-m systems with their known invariants (dimension, number of solutions, radicality) | generated as SymPy expressions | Katsura 2-6, cyclic 3-7 |
 | `maxima_integrals` | Definite integrals and Laplace transforms from Maxima's test suite: the regression file of its definite integration (`rtestint`), the definite integrals of `rtest_integrate`, the definite integrals of **Wester's** *Critique*, and the Laplace transforms of `rtest_laplace` and of `specint` (`rtest_hypgeo`, from Abramowitz and Stegun 29.3 on: Bessel functions, incomplete gamma, `erf`, orthogonal polynomials), each with the facts in force when it runs | Maxima `.mac`, read with the expression parser of `maxima_ode`; the context (`assume`, `forget`, `kill`, `declare`, `assume_pos`, assigned variables) is followed through the file, and a transform is read as its integral over `(0, oo)` | 569 integrals: rtestint 194, rtest_integrate 50, wester 22, laplace 75, specint 228; 392 with a recorded value |
 | `indefinite_integrals` | Indefinite integrals with the facts in force and, where the source records one, a reference antiderivative: the two-argument `integrate` calls of Maxima's `rtest_integrate.mac` (exponentials, logarithms, radicals, trigonometric and hyperbolic functions), `rtestint.mac` (rational functions and algebraic radicals), `rtest14.mac` (Airy and Bessel functions), `rtest7.mac` and the indefinite integrals of **Wester's** *Critique*; and the `testIntegrate` assertions of FriCAS's `src/input/integ.input` (the regression cases of its integrator: Risch, Trager, the Abel and Masser–Zannier examples) with the `testEquals` references | Maxima `.mac`, read with the context-following reader of `maxima_integrals` (an assumption the reader does not translate is remembered by the names it mentions and released by its `forget`); FriCAS input, the string arguments of the assertions rewritten into Maxima syntax as for `fricas_integrals`; the `xf` (expected-failure) assertions assert nothing and are not read | 1165 integrals: rtest_integrate 757, rtestint 71, rtest14 20, wester 13, fricas_integ 304; 267 with a recorded antiderivative |
 | `reduce_defint` | The test file of **REDUCE's DEFINT** package (K. Gaskell, ZIB 1993–94). DEFINT integrates products of Meijer G-functions — the Adamchik–Marichev method, which is also SymPy's `meijerint` — and its tests are integrals over `(0, oo)` and `(0, y)` of powers, exponentials, Bessel functions, `Ei`, `Si`, `Shi` and `erf` | REDUCE `.tst`, rewritten into Maxima syntax as for `reduce_odes` | 93 calls, 92 read (the Fresnel one is refused) |
-| `fricas_integrals` | FriCAS's `mapleok.input`: definite integrals of logarithms, inverse hyperbolic functions, absolute values, real and imaginary parts, over infinite ranges and along complex segments | FriCAS input, rewritten into Maxima syntax; sparse clone of `fricas/fricas` | 252 statements, 231 distinct integrals |
-| `holpy_integrals` | The worked examples of **holpy** (Xu, Li and Zhan, *Verified Interactive Computation of Definite Integrals*, CADE 2021): the MIT Integration Bee (2013, 2014, 2019, 2020), Schaum's Outline and UC Davis exercises, and proved identities (Ahmed, Frullani, Dirichlet, Catalan, Wallis, beta and gamma, log-sine) with their conditions | holpy's JSON; the last line of a checked computation, or the other side of a proved goal, is the recorded value; sparse clone of `bzhan/holpy` | 249 integrals, 218 with a recorded value |
+| `fricas_integrals` | FriCAS's `mapleok.input`: definite integrals of logarithms, inverse hyperbolic functions, absolute values, real and imaginary parts, over infinite ranges and along complex segments | FriCAS input, rewritten into Maxima syntax; kept in `data/fricas/` | 252 statements, 231 distinct integrals |
+| `holpy_integrals` | The worked examples of **holpy** (Xu, Li and Zhan, *Verified Interactive Computation of Definite Integrals*, CADE 2021): the MIT Integration Bee (2013, 2014, 2019, 2020), Schaum's Outline and UC Davis exercises, and proved identities (Ahmed, Frullani, Dirichlet, Catalan, Wallis, beta and gamma, log-sine) with their conditions | holpy's JSON; the last line of a checked computation, or the other side of a proved goal, is the recorded value; kept in `data/holpy/` | 249 integrals, 218 with a recorded value |
 
 The Maxima parser (`parse_expression`) understands the operators
 `+ - * / ^ ** !`, the equality `=`, function calls, the noun form
@@ -64,7 +69,8 @@ x**2 < 2
 
 ```
 
-Loading a collection downloads it on first use into `.cache/`:
+Loading a collection parses the files of `data/` (and downloads the two
+which are not kept there into `.cache/`):
 
 ```python
 from sympy_extras_benchmarks.datasets.maxima_ode import load
@@ -216,16 +222,20 @@ python -m pyflakes sympy_extras_benchmarks conftest.py
 
 ## Sources and licenses
 
-Every dataset is read from an upstream project. **Nothing from any of them is
-committed to this repository**: each parser fetches on first use into `.cache/`
-(or `$SYMPY_EXTRAS_BENCHMARKS_CACHE`), which is gitignored, and a local copy can
-be pointed to with the environment variable in the last column.
+Every dataset is read from an upstream project. **The files of each are
+committed to `data/`, verbatim and in their own language, under the licence of
+that upstream** — see [`data/README.md`](data/README.md) for the directory, the
+version and the licence of each. Two collections are not kept: the full SMT-LIB
+2025 release (3.3 GB unpacked) because of its size, and the TPTP `ARI` domain
+because TPTP's terms are not a grant to redistribute it; those are fetched on
+first use into `.cache/` (or `$SYMPY_EXTRAS_BENCHMARKS_CACHE`), which is
+gitignored. A local copy of any of them can be pointed to with the environment
+variable in the last column, which is read before `data/`.
 
-The licence file of each upstream project is kept with its data: the sparse
-clones keep the files at the root of each repository, where the licence is. A
-dataset module names its licence and those files (`LICENCE`, `LICENCE_FILES`,
-`licence_files()` in the integration datasets), and `definite_integrals` prints
-them before a run.
+The licence file of each upstream project is kept with its data, in `data/` and
+in the sparse clones alike. A dataset module names its licence and those files
+(`LICENCE`, `LICENCE_FILES`, `licence_files()` in the integration datasets), and
+`definite_integrals` prints them before a run.
 
 | Source | Upstream | License (as published there) | What is read | Local override |
 |---|---|---|---|---|
@@ -278,5 +288,13 @@ Recorded so the ground is not covered twice:
 ## License
 
 BSD 3-Clause, like sympy-extras — this covers the parsers, drivers and oracles
-in this repository. The upstream collections keep their own licenses, listed
-above, and are neither redistributed nor committed here.
+in this repository, that is everything outside `data/`.
+
+**The collections in `data/` are not covered by it.** Each keeps the licence of
+its upstream, which travels with it: GPL-2.0 for Maxima's test files, LGPL-2.1
+for the Rocq standard library, Apache-2.0 for mathlib4, MIT for `z3test`,
+CC BY 4.0 for the SMT-LIB problems, CC BY-SA 4.0 for the Bath example bank, and
+BSD-style licences for FriCAS, REDUCE, holpy, cvc5, QEPCAD B and Tarski.
+Redistributing this repository means redistributing those files under those
+licences; [`data/README.md`](data/README.md) lists every one of them with the
+licence file that carries it.

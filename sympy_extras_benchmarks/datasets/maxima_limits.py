@@ -43,10 +43,11 @@ Source and licence
 ==================
 
 Maxima is distributed under the **GNU General Public License, version
-2**. Nothing of it is stored in this repository: the files are fetched on
-first use into the cache directory, or read from
-``$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS``. Only the calls and the
-recorded values are read; Maxima's code is not used.
+2**. The files are kept under it in ``data/maxima/`` (see
+``data/README.md``) and read from there, or from
+``$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS``, or from the cache when neither
+has them. Only the calls and the recorded values are read; Maxima's code
+is not used.
 
 Examples
 ========

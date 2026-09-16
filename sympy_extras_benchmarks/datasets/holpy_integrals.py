@@ -39,12 +39,13 @@ holpy's steps and code are not used.
 Source and licence
 ==================
 
-holpy is distributed under the **BSD 3-Clause** licence (``LICENSE`` in
-the repository); the problems are credited in its files to the MIT
-Integration Bee, Schaum's Outline and UC Davis. Nothing of it is stored in
-this repository: ``integral/examples`` is cloned sparsely on first use into
-the cache directory, or read from ``$SYMPY_EXTRAS_BENCHMARKS_HOLPY`` (a
-checkout of holpy, or the examples directory itself).
+holpy is distributed under the **BSD 3-Clause** licence; the problems are
+credited in its files to the MIT Integration Bee, Schaum's Outline and UC
+Davis. The examples are kept under that licence in ``data/holpy/`` with
+holpy's ``LICENSE`` beside them (see ``data/README.md``) and read from
+there, or from ``$SYMPY_EXTRAS_BENCHMARKS_HOLPY`` (a checkout of holpy, or
+the examples directory itself); if neither is there,
+``integral/examples`` is cloned sparsely into the cache.
 
 Examples
 ========
@@ -74,7 +75,7 @@ from sympy.logic.boolalg import Boolean
 
 from sympy_extras._typing import as_expr
 
-from sympy_extras_benchmarks.cache import cache_directory
+from sympy_extras_benchmarks.cache import bundled, cache_directory
 from sympy_extras_benchmarks.datasets.integrals import (
     DefiniteIntegral, group, parse, relation, split_arguments)
 
@@ -227,6 +228,9 @@ def _directory() -> Optional[pathlib.Path]:
     if override and pathlib.Path(override).is_dir():
         root = pathlib.Path(override)
         return root / SUBTREE if (root / SUBTREE).is_dir() else root
+    kept = bundled('holpy', SUBTREE)
+    if kept is not None:
+        return kept
     clone = cache_directory() / 'holpy'
     if not (clone / SUBTREE).is_dir():
         try:

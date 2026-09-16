@@ -32,13 +32,14 @@ Source and licence
 ==================
 
 Maxima is distributed under the **GNU General Public License, version 2**.
-Nothing of its files is stored in this repository: they are cloned on
-first use into the cache directory (a sparse checkout of Maxima's git
-repository on SourceForge, or the files of the GitHub mirror), or read
-from a local Maxima installation named by
-``$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS``. Only the equations — facts from
-Kamke's and Murphy's books — and the one-word method classification are
-read.
+Its test files are kept in this repository under that licence, in
+``data/maxima/`` with Maxima's ``COPYING`` beside them (see
+``data/README.md``), and are read from there; a local Maxima installation
+named by ``$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS`` is read instead, and a
+file which is in neither is fetched into the cache (a sparse checkout of
+Maxima's git repository on SourceForge, or the files of the GitHub
+mirror). Only the equations — facts from Kamke's and Murphy's books — and
+the one-word method classification are read.
 
 The parser
 ==========
@@ -87,7 +88,7 @@ from sympy.core.function import AppliedUndef, UndefinedFunction
 
 from sympy_extras._typing import as_expr
 
-from sympy_extras_benchmarks.cache import cache_directory
+from sympy_extras_benchmarks.cache import bundled, cache_directory
 
 __all__ = ['ODEEntry', 'COLLECTIONS', 'FILES', 'fetch', 'load', 'parse_equation',
            'parse_expression', 'parse_file', 'tokenize', 'MaximaSyntaxError']
@@ -720,6 +721,9 @@ def fetch(name: str, subdirectory: str = SUBDIRECTORY) -> Optional[str]:
     local = _local_directory()
     if local is not None and (local / (name + '.mac')).is_file():
         return (local / (name + '.mac')).read_text(errors='replace')
+    kept = bundled('maxima', 'repository', subdirectory, name + '.mac')
+    if kept is not None:
+        return kept.read_text(errors='replace')
     cache = cache_directory() / 'maxima'
     cache.mkdir(parents=True, exist_ok=True)
     clone = cache / 'repository'

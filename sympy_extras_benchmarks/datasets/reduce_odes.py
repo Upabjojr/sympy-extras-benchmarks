@@ -30,10 +30,11 @@ Source and licence
 
 REDUCE is distributed under the *Reduce License*, a **BSD 2-clause**
 style licence (see the ``LICENSE`` file of the repository; GitHub does not
-recognise it as a standard SPDX identifier). Nothing of it is stored in
-this repository: the package directory is cloned sparsely on
-first use into the cache directory, or read from a local checkout named by
-``$SYMPY_EXTRAS_BENCHMARKS_REDUCE``.
+recognise it as a standard SPDX identifier). The package directory is kept
+under it in ``data/reduce/`` with that ``LICENSE`` beside it (see
+``data/README.md``) and read from there, or from a local checkout named by
+``$SYMPY_EXTRAS_BENCHMARKS_REDUCE``; if neither is there it is cloned
+sparsely into the cache.
 
 The parser
 ==========
@@ -75,7 +76,7 @@ from sympy import Function, Symbol
 from sympy.core.expr import Expr
 from sympy.core.function import AppliedUndef
 
-from sympy_extras_benchmarks.cache import cache_directory
+from sympy_extras_benchmarks.cache import bundled, cache_directory
 from sympy_extras_benchmarks.datasets.maxima_ode import MaximaSyntaxError, parse_expression
 
 __all__ = ['ReduceODE', 'REPOSITORY', 'SUBTREE', 'FILES', 'fetch', 'load', 'equations',
@@ -220,6 +221,9 @@ def package_directory(subtree: str = SUBTREE) -> Optional[pathlib.Path]:
     if override and pathlib.Path(override).is_dir():
         root = pathlib.Path(override)
         return root / subtree if (root / subtree).is_dir() else root
+    kept = bundled('reduce', subtree)
+    if kept is not None:
+        return kept
     clone = cache_directory() / 'reduce'
     if not (clone / subtree).is_dir():
         try:

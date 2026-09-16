@@ -10,11 +10,11 @@ Paulson, *MetiTarski: An automatic theorem prover for real-valued special
 functions*, JAR 44, 2010): polynomial bounds of ``exp``, ``log``, ``sin``,
 ``atan``, ... in a few real variables, each with its recorded
 ``:status sat|unsat`` (they were submitted by Jovanovic and de Moura for
-*Solving Non-Linear Arithmetic*, IJCAR 2012). The family is mirrored in
-the ``dreal/benchmarks`` repository on GitHub, which is cloned sparsely on
-first use into the cache directory; a local copy can be named by
-``$SYMPY_EXTRAS_BENCHMARKS_SMTLIB``. Nothing of the files is stored in this
-repository.
+*Solving Non-Linear Arithmetic*, IJCAR 2012). The family is kept in this
+repository, in ``data/meti-tarski/``, as the SMT-LIB 2025 release
+publishes it; a local copy can be named by
+``$SYMPY_EXTRAS_BENCHMARKS_SMTLIB``, and the ``dreal/benchmarks`` mirror
+on GitHub is cloned sparsely into the cache when neither is there.
 
 The parser
 ==========
@@ -49,12 +49,16 @@ Problem(demo, unsat, 1 variables)
 Source and licence
 ==================
 
-The files are fetched on first use into the cache directory from the
-`dreal/benchmarks <https://github.com/dreal/benchmarks>`_ mirror (or read
-from ``$SYMPY_EXTRAS_BENCHMARKS_SMTLIB``); that mirror carries no licence
-file of its own and the SMT-LIB benchmarks keep their own terms. Nothing
-of them is stored in this repository, and only the formulas and the
-recorded ``:status`` are read.
+The problems are kept in this repository, in ``data/meti-tarski/``: the
+7006 files of the family as the **SMT-LIB 2025 release** publishes them
+(doi:10.5281/zenodo.16740866), under the **CC BY 4.0** licence that
+release carries, with the attribution in ``data/meti-tarski/NOTICE``.
+``$SYMPY_EXTRAS_BENCHMARKS_SMTLIB`` names a directory to read instead; if
+neither is there, the 7713 files of the
+`dreal/benchmarks <https://github.com/dreal/benchmarks>`_ mirror are
+cloned into the cache, a mirror which carries no licence of its own and
+is therefore not kept here. Only the formulas and the recorded
+``:status`` are read.
 """
 from __future__ import annotations
 
@@ -70,7 +74,7 @@ from sympy.logic.boolalg import Boolean, ITE
 
 from sympy_extras._typing import as_boolean, as_expr
 
-from sympy_extras_benchmarks.cache import cache_directory
+from sympy_extras_benchmarks.cache import bundled, cache_directory
 
 __all__ = ['Problem', 'REPOSITORY', 'SUBDIRECTORY', 'fetch', 'load', 'tokenize', 'parse',
            'translate', 'SMTLibError']
@@ -417,6 +421,9 @@ def fetch() -> Optional[pathlib.Path]:
     override = os.environ.get(ENVIRONMENT_VARIABLE)
     if override and pathlib.Path(override).is_dir():
         return pathlib.Path(override)
+    kept = bundled('meti-tarski')
+    if kept is not None:
+        return kept
     clone = cache_directory() / 'dreal-benchmarks'
     target = clone / SUBDIRECTORY
     if target.is_dir() and any(target.iterdir()):
@@ -437,7 +444,7 @@ def load(limit: int = 0) -> list[pathlib.Path]:
     directory = fetch()
     if directory is None:
         return []
-    paths = sorted(directory.glob('*.smt2'))
+    paths = sorted(directory.rglob('*.smt2'))
     return paths[:limit] if limit else paths
 
 

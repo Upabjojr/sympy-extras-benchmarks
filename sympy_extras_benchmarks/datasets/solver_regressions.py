@@ -15,9 +15,10 @@ suites read here are
 * the ``regressions`` tree of `z3test <https://github.com/Z3Prover/z3test>`_,
   which records it in ``(set-info :status ...)``.
 
-Both are cloned sparsely on first use into the cache directory; a local
-copy can be named by ``$SYMPY_EXTRAS_BENCHMARKS_SOLVER_REGRESSIONS``.
-Nothing of the files is stored in this repository, and only the
+The subtrees read are kept in this repository, in
+``data/solver-regressions-z3/`` and ``data/solver-regressions-cvc5/``; a
+local copy can be named by ``$SYMPY_EXTRAS_BENCHMARKS_SOLVER_REGRESSIONS``,
+and what is in neither is cloned sparsely into the cache. Only the
 mathematical content is read: the formula, the sorts of the variables
 and the recorded status.
 
@@ -84,9 +85,15 @@ Source and licence
 ==================
 
 cvc5 is distributed under a **modified BSD** licence, ``z3test`` under the
-**MIT** licence. Neither is redistributed here: the suites are cloned
-sparsely on first use into the cache directory, and only the formulas and
-the recorded ``sat``/``unsat`` answers are read.
+**MIT** licence. The subtrees read are kept under those licences in
+``data/solver-regressions-cvc5/`` and ``data/solver-regressions-z3/``,
+with each project's licence file beside them (see ``data/README.md``),
+and are read from there; ``$SYMPY_EXTRAS_BENCHMARKS_SOLVER_REGRESSIONS``
+names a directory to read instead, and a subtree in neither is cloned
+sparsely into the cache. Two machine-generated files of
+``z3test``'s ``regressions/nl``, of 13 MB and 9 MB, are too large to keep
+and are only in the cache. Only the formulas and the recorded
+``sat``/``unsat`` answers are read.
 """
 from __future__ import annotations
 
@@ -106,7 +113,7 @@ from sympy.core.singleton import S
 from sympy_extras.assumptions import Exists, ForAll
 from sympy_extras._typing import as_boolean, as_expr
 
-from sympy_extras_benchmarks.cache import cache_directory
+from sympy_extras_benchmarks.cache import bundled, cache_directory
 from sympy_extras_benchmarks.datasets.smtlib import SExpr, SMTLibError, parse, tokenize
 
 __all__ = ['ArithProblem', 'SOURCES', 'ARITHMETIC_LOGICS', 'fetch', 'load', 'translate']
@@ -597,6 +604,11 @@ def fetch() -> list[pathlib.Path]:
         return [pathlib.Path(override)]
     directories: list[pathlib.Path] = []
     for key, (repository, subtrees) in SOURCES.items():
+        kept = [p for p in (bundled('solver-regressions-' + key, s) for s in subtrees)
+                if p is not None]
+        if kept:
+            directories.extend(kept)
+            continue
         clone = cache_directory() / ('solver-regressions-' + key)
         present = [clone / s for s in subtrees if (clone / s).is_dir()]
         if present:

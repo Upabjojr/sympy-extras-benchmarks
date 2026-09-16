@@ -10,8 +10,11 @@ The archive has three files: the examples as QEPCAD inputs (78, of which a
 few are repeated in two sections), the polynomials and variable lists of
 the examples as a Maple file, and a PDF which states each example with its
 suggested variable order and the best number of cells of a full CAD that
-Maple achieved. They are downloaded on first use into the cache (or read
-from ``$SYMPY_EXTRAS_BENCHMARKS_BATH_CAD``). The QEPCAD inputs are read with
+Maple achieved. All three are kept in this repository under the bank's
+CC BY-SA 4.0 licence, in ``data/bath-cad-examples/`` with the attribution
+in its ``NOTICE`` (see ``data/README.md``), and are read from there, or
+from ``$SYMPY_EXTRAS_BENCHMARKS_BATH_CAD``; if neither is there they are
+downloaded into the cache. The QEPCAD inputs are read with
 :mod:`~sympy_extras_benchmarks.datasets.qepcad_syntax`; the bank records
 no quantifier-free answers, so a result has to be checked against another
 system. The cell counts are Maple's best, not a minimum a correct CAD must
@@ -32,7 +35,7 @@ from sympy.core.expr import Expr
 from sympy.parsing.sympy_parser import parse_expr
 
 from sympy_extras._typing import as_expr
-from sympy_extras_benchmarks.cache import cache_directory
+from sympy_extras_benchmarks.cache import bundled, cache_directory
 from sympy_extras_benchmarks.datasets.qepcad_syntax import Example, blocks
 
 __all__ = ['FILES', 'ENVIRONMENT_VARIABLE', 'fetch', 'examples', 'PolynomialExample',
@@ -53,6 +56,9 @@ def fetch() -> Optional[pathlib.Path]:
     override = os.environ.get(ENVIRONMENT_VARIABLE)
     if override and pathlib.Path(override).is_dir():
         return pathlib.Path(override)
+    kept = bundled('bath-cad-examples')
+    if kept is not None:
+        return kept
     directory = cache_directory() / 'bath-cad-examples'
     try:
         directory.mkdir(parents=True, exist_ok=True)

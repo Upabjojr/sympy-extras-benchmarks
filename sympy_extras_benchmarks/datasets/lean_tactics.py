@@ -29,11 +29,13 @@ truncated and ``a - b`` would not mean what it says.
 Source and licence
 ==================
 
-mathlib4 is distributed under the **Apache License 2.0**. The repository
-is cloned sparsely on first use into the cache directory; a local copy can
-be named by ``$SYMPY_EXTRAS_BENCHMARKS_MATHLIB``. Nothing of the files is
-stored in this repository, and only the mathematical content is read: the
-binders, the hypotheses and the goal. **Mathlib's proofs are not used.**
+mathlib4 is distributed under the **Apache License 2.0**. The test files
+are kept under it in ``data/mathlib4/`` with mathlib's ``LICENSE`` beside
+them (see ``data/README.md``) and read from there, or from a local copy
+named by ``$SYMPY_EXTRAS_BENCHMARKS_MATHLIB``; if neither is there the
+repository is cloned sparsely into the cache. Only the mathematical
+content is read: the binders, the hypotheses and the goal. **Mathlib's
+proofs are not used.**
 
 The parser
 ==========
@@ -78,7 +80,7 @@ from sympy.core.singleton import S
 from sympy_extras.assumptions import Exists, ForAll
 from sympy_extras._typing import as_boolean
 
-from sympy_extras_benchmarks.cache import cache_directory
+from sympy_extras_benchmarks.cache import bundled, cache_directory
 from sympy_extras_benchmarks.datasets.prover_syntax import (
     IDENTIFIER, SyntaxRefused, bars_to_abs, proposition, split_top)
 
@@ -482,6 +484,8 @@ def fetch() -> list[pathlib.Path]:
     (made on first use). An empty list when it cannot be obtained."""
     override = os.environ.get(ENVIRONMENT_VARIABLE)
     root = pathlib.Path(override) if override and pathlib.Path(override).is_dir() else None
+    if root is None:
+        root = bundled('mathlib4')
     if root is None:
         clone = cache_directory() / 'mathlib4'
         if not any((clone / s).exists() for s in SUBTREES):

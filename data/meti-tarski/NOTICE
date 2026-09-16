@@ -1,0 +1,21 @@
+The Meti-Tarski family of the SMT-LIB benchmark library
+=======================================================
+
+The 7006 QF_NRA problems in this directory are the `meti-tarski` family of
+the SMT-LIB 2025 release of the non-incremental benchmarks:
+
+    SMT-LIB release 2025 (non-incremental benchmarks)
+    Mathias Preiner, Hans-Jorg Schurr, Clark Barrett, Pascal Fontaine,
+    Aina Niemetz and Cesare Tinelli
+    Zenodo, doi:10.5281/zenodo.16740866
+    https://doi.org/10.5281/zenodo.16740866
+
+They are distributed under the Creative Commons Attribution 4.0
+International licence (CC BY 4.0),
+https://creativecommons.org/licenses/by/4.0/, and are kept here verbatim,
+in the directory of the family each belongs to, exactly as the release
+holds them.
+
+The problems themselves come from MetiTarski (L. C. Paulson and others),
+which produces them as proof obligations on polynomial bounds of the
+special functions.

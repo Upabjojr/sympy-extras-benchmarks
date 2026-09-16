@@ -34,11 +34,13 @@ Source and licence
 ==================
 
 The Rocq standard library is distributed under the **GNU Lesser General
-Public License, version 2.1**. The repository is cloned sparsely on first
-use into the cache directory; a local copy can be named by
-``$SYMPY_EXTRAS_BENCHMARKS_ROCQ_STDLIB``. Nothing of the files is stored
-in this repository, and only the mathematical content is read: the
-binders, the hypotheses and the conclusion. **The proofs are not used.**
+Public License, version 2.1**. The ``micromega`` test suite is kept under
+it in ``data/rocq-stdlib/`` with the library's ``LICENSE`` beside it (see
+``data/README.md``) and read from there, or from a local copy named by
+``$SYMPY_EXTRAS_BENCHMARKS_ROCQ_STDLIB``; if neither is there the
+repository is cloned sparsely into the cache. Only the mathematical
+content is read: the binders, the hypotheses and the conclusion. **The
+proofs are not used.**
 
 The parser
 ==========
@@ -88,7 +90,7 @@ from sympy.sets.sets import Set
 from sympy_extras.assumptions import Exists, ForAll
 from sympy_extras._typing import as_boolean
 
-from sympy_extras_benchmarks.cache import cache_directory
+from sympy_extras_benchmarks.cache import bundled, cache_directory
 from sympy_extras_benchmarks.datasets.prover_syntax import (
     IDENTIFIER, SyntaxRefused, balanced, proposition, split_top)
 
@@ -329,6 +331,8 @@ def fetch() -> list[pathlib.Path]:
     obtained."""
     override = os.environ.get(ENVIRONMENT_VARIABLE)
     root = pathlib.Path(override) if override and pathlib.Path(override).is_dir() else None
+    if root is None:
+        root = bundled('rocq-stdlib')
     if root is None:
         clone = cache_directory() / 'rocq-stdlib'
         if not any((clone / subtree).exists() for subtree in SUBTREES):

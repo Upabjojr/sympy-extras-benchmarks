@@ -15,8 +15,11 @@ worked examples of its web pages:
 * ``public_html/B/examples``: the inputs of the worked examples, two of them
   session transcripts with QEPCAD's answer.
 
-The repository is cloned sparsely on first use (or read from
-``$SYMPY_EXTRAS_BENCHMARKS_QEPCAD``). Only the inputs and QEPCAD's recorded
+These files are kept in this repository under QEPCAD's own licence, in
+``data/qepcad/`` with ``qesource/LICENSE`` beside them (see
+``data/README.md``), and are read from there, or from
+``$SYMPY_EXTRAS_BENCHMARKS_QEPCAD``; if neither is there the repository is
+cloned sparsely into the cache. Only the inputs and QEPCAD's recorded
 answers are read; no code of QEPCAD is used.
 """
 from __future__ import annotations
@@ -27,7 +30,7 @@ import re
 import subprocess
 from typing import Optional
 
-from sympy_extras_benchmarks.cache import cache_directory
+from sympy_extras_benchmarks.cache import bundled, cache_directory
 from sympy_extras_benchmarks.datasets.qepcad_syntax import Example, blocks
 
 __all__ = ['REPOSITORY', 'ENVIRONMENT_VARIABLE', 'fetch', 'examples']
@@ -42,6 +45,9 @@ def fetch() -> Optional[pathlib.Path]:
     override = os.environ.get(ENVIRONMENT_VARIABLE)
     if override and pathlib.Path(override).is_dir():
         return pathlib.Path(override)
+    kept = bundled('qepcad')
+    if kept is not None:
+        return kept
     clone = cache_directory() / 'qepcad'
     if (clone / 'regressiontests').is_dir():
         return clone

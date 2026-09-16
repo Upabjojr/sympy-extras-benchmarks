@@ -38,7 +38,7 @@ from __future__ import annotations
 import re
 from typing import Optional
 
-from sympy import Eq, Integer, Ne, Symbol, Rational, true, false
+from sympy import Eq, Integer, Ne, Symbol, true, false
 from sympy.core.expr import Expr
 from sympy.logic.boolalg import And, Boolean, Equivalent, Implies, Not, Or
 

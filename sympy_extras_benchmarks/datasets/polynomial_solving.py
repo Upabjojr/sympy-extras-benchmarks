@@ -33,9 +33,9 @@ Source and licence
 ==================
 
 Maxima is distributed under the **GNU General Public License, version 2**.
-Nothing of the file is stored in this repository: it is fetched on first
-use into the cache directory (or read from
-``$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS``), like the collections read by
+The file is kept under it in ``data/maxima/`` (see ``data/README.md``) and
+read from there, or from ``$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS``, or
+from the cache, like the collections read by
 :mod:`~sympy_extras_benchmarks.datasets.maxima_ode`, whose Maxima
 expression parser this module reuses. **Maxima's code is not used**, and
 its recorded solutions are only counted.

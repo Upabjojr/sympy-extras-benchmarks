@@ -49,7 +49,7 @@ from sympy_extras._typing import as_boolean
 
 from sympy_extras_benchmarks.datasets import smtlib, solver_regressions, tarski_tests
 from sympy_extras_benchmarks.datasets.smtlib_release import family, load
-from sympy_extras_benchmarks.runner import JSON, Result, Task, run
+from sympy_extras_benchmarks.runner import Result, Task, run
 
 T = TypeVar('T')
 

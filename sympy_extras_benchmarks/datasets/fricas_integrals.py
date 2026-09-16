@@ -28,12 +28,12 @@ joining them, which is what an oracle computing it numerically integrates
 Source and licence
 ==================
 
-FriCAS is distributed under the **modified (3-clause) BSD licence**
-(``LICENSE.txt`` in the repository). Nothing of it is stored in this
-repository: ``src/input`` is cloned sparsely on first use into the cache
-directory, or read from ``$SYMPY_EXTRAS_BENCHMARKS_FRICAS`` (a checkout of
-FriCAS, or a directory holding the file). FriCAS's code and answers are not
-used.
+FriCAS is distributed under the **modified (3-clause) BSD licence**. The
+input files are kept under it in ``data/fricas/`` with FriCAS's
+``LICENSE.txt`` beside them (see ``data/README.md``) and read from there,
+or from ``$SYMPY_EXTRAS_BENCHMARKS_FRICAS`` (a checkout of FriCAS, or a
+directory holding the file); if neither is there, ``src/input`` is cloned
+sparsely into the cache. FriCAS's code and answers are not used.
 
 Examples
 ========
@@ -59,7 +59,7 @@ from typing import Optional
 
 from sympy import Symbol
 
-from sympy_extras_benchmarks.cache import cache_directory
+from sympy_extras_benchmarks.cache import bundled, cache_directory
 from sympy_extras_benchmarks.datasets.integrals import (
     DefiniteIntegral, group, parse, split_arguments)
 
@@ -154,6 +154,9 @@ def _directory() -> Optional[pathlib.Path]:
     if override and pathlib.Path(override).is_dir():
         root = pathlib.Path(override)
         return root / SUBTREE if (root / SUBTREE).is_dir() else root
+    kept = bundled('fricas', SUBTREE)
+    if kept is not None:
+        return kept
     clone = cache_directory() / 'fricas'
     if not (clone / SUBTREE).is_dir():
         try:

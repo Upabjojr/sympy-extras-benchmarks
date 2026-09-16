@@ -22,8 +22,12 @@ licence in ``interpreter/LICENSE``) ships
   status. A disjunct of an unsatisfiable problem is unsatisfiable; its
   source is the Meti-Tarski file its name starts with.
 
-The repository is cloned sparsely on first use (or read from
-``$SYMPY_EXTRAS_BENCHMARKS_TARSKI``). Only the formulas and Tarski's
+Everything but the Brown--Vale-Enriquez data is kept in this repository
+under Tarski's own licence, in ``data/tarski/`` with
+``interpreter/LICENSE`` beside it (see ``data/README.md``), and is read
+from there, or from ``$SYMPY_EXTRAS_BENCHMARKS_TARSKI``. That data
+(139000 files, 623 MB) is too large to keep: :func:`brown_files` clones it
+sparsely into the cache on first use. Only the formulas and Tarski's
 recorded answers are read; no code of Tarski is used.
 """
 from __future__ import annotations
@@ -34,26 +38,37 @@ import re
 import subprocess
 from typing import Optional
 
-from sympy_extras_benchmarks.cache import cache_directory
+from sympy_extras_benchmarks.cache import bundled, cache_directory, data_directory
 from sympy_extras_benchmarks.datasets.qepcad_syntax import Example
 
-__all__ = ['REPOSITORY', 'ENVIRONMENT_VARIABLE', 'fetch', 'examples', 'brown_files', 'brown_source']
+__all__ = ['REPOSITORY', 'BROWN_SUBTREE', 'ENVIRONMENT_VARIABLE', 'fetch', 'examples', 'brown_files', 'brown_source']
 
 REPOSITORY = 'https://github.com/chriswestbrown/tarski'
 _SPARSE = ['/tests/', '/regression/', '/interpreter/examples/', '/interpreter/LICENSE']
+#: the Brown--Vale-Enriquez data: 139000 files, too large to keep in the
+#: repository, so the only subtree which is always downloaded
+BROWN_SUBTREE = 'tests/dataset-Brown-V-E-2019'
 ENVIRONMENT_VARIABLE = 'SYMPY_EXTRAS_BENCHMARKS_TARSKI'
 
 #: the unit tests of the interpreter whose target is equivalent to the input
 _EQUIVALENT_TARGETS = ('normalize', 'qfr')
 
 
-def fetch() -> Optional[pathlib.Path]:
-    """The root of the sparse clone, made on first use."""
+def fetch(required: str = 'regression') -> Optional[pathlib.Path]:
+    """The root of the data: the directory named by
+    ``$SYMPY_EXTRAS_BENCHMARKS_TARSKI``, the copy kept in the repository
+    when it holds ``required``, or the sparse clone, made on first use.
+
+    ``required`` is the subdirectory the caller reads. All of them but
+    :data:`BROWN_SUBTREE` are kept in ``data/``; that one is too large and
+    is only ever in the clone."""
     override = os.environ.get(ENVIRONMENT_VARIABLE)
     if override and pathlib.Path(override).is_dir():
         return pathlib.Path(override)
+    if bundled('tarski', required) is not None:
+        return data_directory() / 'tarski'
     clone = cache_directory() / 'tarski'
-    if (clone / 'regression').is_dir():
+    if (clone / required).is_dir():
         return clone
     try:
         subprocess.run(['git', 'clone', '--depth', '1', '--filter=blob:none', '--sparse', REPOSITORY, str(clone)],
@@ -62,7 +77,7 @@ def fetch() -> Optional[pathlib.Path]:
                        check=True, capture_output=True, timeout=1800)
     except (OSError, subprocess.SubprocessError):
         return None
-    return clone if (clone / 'regression').is_dir() else None
+    return clone if (clone / required).is_dir() else None
 
 
 def _bracket(text: str, start: int) -> Optional[str]:
@@ -124,10 +139,10 @@ def examples() -> list[Example]:
 
 def brown_files(round_: int) -> list[pathlib.Path]:
     """The SMT-LIB files of round 1 or 2 of the Brown--Vale-Enriquez data."""
-    root = fetch()
+    root = fetch(BROWN_SUBTREE)
     if root is None:
         return []
-    return sorted((root / 'tests' / 'dataset-Brown-V-E-2019' / ('smtlib-r%d' % round_)).glob('*.smt2'))
+    return sorted((root / BROWN_SUBTREE / ('smtlib-r%d' % round_)).glob('*.smt2'))
 
 
 def brown_source(path: pathlib.Path) -> str:

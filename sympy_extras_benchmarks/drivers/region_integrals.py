@@ -46,7 +46,7 @@ from sympy_extras._timeout import TimeLimitExceeded, time_limit
 from sympy_extras._typing import as_boolean, as_expr
 from sympy_extras.integrals import IntegralByRanges, integrate_by_ranges
 
-from sympy_extras_benchmarks.runner import JSON, Result, Task, run
+from sympy_extras_benchmarks.runner import Result, Task, run
 
 #: the box every region is cut to
 BOX = 3
