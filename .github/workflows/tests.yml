@@ -43,4 +43,4 @@ jobs:
       - name: mypy
         run: python -m mypy
       - name: pyflakes
-        run: python -m pyflakes sympy_extras_benchmarks conftest.py
+        run: python -m pyflakes sympy_extras_benchmarks conftest.py scripts

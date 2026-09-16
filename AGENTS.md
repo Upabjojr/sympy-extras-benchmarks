@@ -47,6 +47,7 @@ sympy_extras_benchmarks/
     drivers/                 one module per benchmark, each with main(argv) -> int
     __main__.py              python -m sympy_extras_benchmarks DRIVER [options]
 data/                        the collections, in their own language, with their licences
+scripts/huggingface_upload.py  stages the collections too large for data/ and uploads them to the Hub
 results/                     runs written by --output, ignored by git
 .cache/                      what data/ does not keep: downloaded, ignored by git
 ```
@@ -155,7 +156,7 @@ Strict type stability as in sympy-extras: every function annotated, no
 ```
 python -m pytest              # parser tests and doctests, no network
 python -m mypy                # Success: no issues found
-python -m pyflakes sympy_extras_benchmarks conftest.py
+python -m pyflakes sympy_extras_benchmarks conftest.py scripts
 ```
 
 The unit tests must stay fast and offline; the benchmarks themselves are

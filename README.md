@@ -217,7 +217,7 @@ whatever report the numbers go into.
 ```
 python -m pytest        # parser tests on inline samples and doctests, no network
 python -m mypy
-python -m pyflakes sympy_extras_benchmarks conftest.py
+python -m pyflakes sympy_extras_benchmarks conftest.py scripts
 ```
 
 ## Sources and licenses

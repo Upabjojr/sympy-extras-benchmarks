@@ -55,6 +55,19 @@ never committed:
   them here, so the domain is extracted from the official distribution
   instead.
 
+## The large collections on the Hugging Face Hub
+
+`scripts/huggingface_upload.py` prepares the three collections left out for
+their size — the SMT-LIB 2025 `QF_NRA` and `NRA` archives, the
+Brown–Vale-Enriquez data of Tarski and the two large `z3test` files — as one
+Hugging Face dataset repository each, since each has its own licence: the
+files unchanged in their source language (the 139000 Brown–Vale-Enriquez
+files packed into two `.tar.zst`), the upstream licence text, a dataset card
+with the attribution, and `SHA256SUMS`. It stages into
+`.cache/huggingface-staging/` by default and uploads only with `--upload`,
+creating private repositories unless `--public` is given. TPTP is not among
+them: uploading it would be redistributing it.
+
 ## Refreshing a collection
 
 Delete the directory and let the dataset fetch its upstream again
