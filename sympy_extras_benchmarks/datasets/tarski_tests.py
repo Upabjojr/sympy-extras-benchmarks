@@ -27,8 +27,9 @@ under Tarski's own licence, in ``data/tarski/`` with
 ``interpreter/LICENSE`` beside it (see ``data/README.md``), and is read
 from there, or from ``$SYMPY_EXTRAS_BENCHMARKS_TARSKI``. That data
 (139000 files, 623 MB) is too large to keep: :func:`brown_files` clones it
-sparsely into the cache on first use; it is also mirrored on the Hugging
-Face Hub as `Upabjojr/tarski-brown-vale-enriquez-2019
+sparsely into the cache on first use, or unpacks it from its mirror on the
+Hugging Face Hub when GitHub cannot be reached or under the global option
+of :mod:`~sympy_extras_benchmarks.huggingface`; the mirror is `Upabjojr/tarski-brown-vale-enriquez-2019
 <https://huggingface.co/datasets/Upabjojr/tarski-brown-vale-enriquez-2019>`_.
 Only the formulas and Tarski's recorded answers are read; no code of Tarski
 is used.
@@ -38,9 +39,11 @@ from __future__ import annotations
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 from typing import Optional
 
+from sympy_extras_benchmarks import huggingface
 from sympy_extras_benchmarks.cache import bundled, cache_directory, data_directory
 from sympy_extras_benchmarks.datasets.qepcad_syntax import Example
 
@@ -64,23 +67,56 @@ def fetch(required: str = 'regression') -> Optional[pathlib.Path]:
 
     ``required`` is the subdirectory the caller reads. All of them but
     :data:`BROWN_SUBTREE` are kept in ``data/``; that one is too large and
-    is only ever in the clone."""
+    is downloaded: from GitHub, or from the Hugging Face mirror when GitHub
+    cannot be reached or under the global option of
+    :mod:`~sympy_extras_benchmarks.huggingface`."""
     override = os.environ.get(ENVIRONMENT_VARIABLE)
     if override and pathlib.Path(override).is_dir():
         return pathlib.Path(override)
     if bundled('tarski', required) is not None:
         return data_directory() / 'tarski'
     clone = cache_directory() / 'tarski'
-    if (clone / required).is_dir():
-        return clone
+    mirror = cache_directory() / 'tarski-huggingface'
+    for root in (clone, mirror):
+        if (root / required).is_dir():
+            return root
+
+    def github() -> Optional[pathlib.Path]:
+        try:
+            subprocess.run(['git', 'clone', '--depth', '1', '--filter=blob:none', '--sparse',
+                            REPOSITORY, str(clone)], check=True, capture_output=True, timeout=1800)
+            subprocess.run(['git', '-C', str(clone), 'sparse-checkout', 'set', '--no-cone', *_SPARSE],
+                           check=True, capture_output=True, timeout=1800)
+        except (OSError, subprocess.SubprocessError):
+            return None
+        return clone if (clone / required).is_dir() else None
+
+    def hub() -> Optional[pathlib.Path]:
+        return _brown_from_hub(mirror) if required == BROWN_SUBTREE else None
+
+    return huggingface.first(github, hub)
+
+
+def _brown_from_hub(root: pathlib.Path) -> Optional[pathlib.Path]:
+    """The Brown--Vale-Enriquez data unpacked from its Hub mirror under
+    ``root``, laid out as in Tarski's repository."""
+    target = root / BROWN_SUBTREE
+    partial = root / (BROWN_SUBTREE + '.partial')
     try:
-        subprocess.run(['git', 'clone', '--depth', '1', '--filter=blob:none', '--sparse', REPOSITORY, str(clone)],
-                       check=True, capture_output=True, timeout=1800)
-        subprocess.run(['git', '-C', str(clone), 'sparse-checkout', 'set', '--no-cone', *_SPARSE],
-                       check=True, capture_output=True, timeout=1800)
+        if partial.exists():
+            shutil.rmtree(partial)
+        partial.mkdir(parents=True)
+        for name in ('README', 'round1inputs', 'round2inputs', 'smtlib-r1.tar.zst', 'smtlib-r2.tar.zst'):
+            if huggingface.download(huggingface.TARSKI_BROWN, name, partial / name) is None:
+                return None
+        for name in ('smtlib-r1.tar.zst', 'smtlib-r2.tar.zst'):
+            subprocess.run(['tar', '--zstd', '-xf', str(partial / name), '-C', str(partial)],
+                           check=True, capture_output=True, timeout=3600)
+            (partial / name).unlink()
+        partial.replace(target)
     except (OSError, subprocess.SubprocessError):
         return None
-    return clone if (clone / required).is_dir() else None
+    return root
 
 
 def _bracket(text: str, start: int) -> Optional[str]:

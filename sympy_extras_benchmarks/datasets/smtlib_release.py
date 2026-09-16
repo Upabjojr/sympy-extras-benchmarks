@@ -12,8 +12,10 @@ doi:10.5281/zenodo.16740866, licence CC BY 4.0):
 * ``NRA`` -- 3819 quantified problems (KeYmaera 3813, and six more),
   3806 recorded ``unsat``, 5 ``sat`` and 8 ``unknown``.
 
-The archives are downloaded on first use into the cache, checked against
-the MD5 sums Zenodo publishes and unpacked with ``tar --zstd`` (the
+The archives are downloaded on first use into the cache -- from Zenodo,
+or from the Hugging Face mirror when Zenodo cannot be reached or under the
+global option of :mod:`~sympy_extras_benchmarks.huggingface` -- checked
+against the MD5 sums Zenodo publishes and unpacked with ``tar --zstd`` (the
 ``zstd`` program must be installed). A directory holding an unpacked
 release (the one containing ``non-incremental/``) can be named with
 ``$SYMPY_EXTRAS_BENCHMARKS_SMTLIB_RELEASE`` instead. The files are
@@ -36,6 +38,7 @@ import subprocess
 import urllib.request
 from typing import Optional
 
+from sympy_extras_benchmarks import huggingface
 from sympy_extras_benchmarks.cache import cache_directory
 
 __all__ = ['RECORD', 'ARCHIVES', 'ENVIRONMENT_VARIABLE', 'fetch', 'load', 'family']
@@ -80,13 +83,23 @@ def fetch(logic: str) -> Optional[pathlib.Path]:
         return target
     name, checksum = ARCHIVES[logic]
     archive = root / name
-    try:
-        root.mkdir(parents=True, exist_ok=True)
-        if not archive.exists() or _md5(archive) != checksum:
-            url = 'https://zenodo.org/records/%s/files/%s?download=1' % (RECORD, name)
+
+    def zenodo() -> Optional[pathlib.Path]:
+        url = 'https://zenodo.org/records/%s/files/%s?download=1' % (RECORD, name)
+        try:
             with urllib.request.urlopen(url, timeout=600) as response, open(archive, 'wb') as sink:
                 shutil.copyfileobj(response, sink)
-        if _md5(archive) != checksum:
+        except OSError:
+            return None
+        return archive if _md5(archive) == checksum else None
+
+    def hub() -> Optional[pathlib.Path]:
+        got = huggingface.download(huggingface.SMTLIB_2025, name, archive)
+        return got if got is not None and _md5(got) == checksum else None
+
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        if not (archive.exists() and _md5(archive) == checksum) and huggingface.first(zenodo, hub) is None:
             return None
         subprocess.run(['tar', '--zstd', '-xf', str(archive), '-C', str(root)],
                        check=True, capture_output=True, timeout=3600)

@@ -91,8 +91,10 @@ with each project's licence file beside them (see ``data/README.md``),
 and are read from there; ``$SYMPY_EXTRAS_BENCHMARKS_SOLVER_REGRESSIONS``
 names a directory to read instead, and a subtree in neither is cloned
 sparsely into the cache. Two machine-generated files of
-``z3test``'s ``regressions/nl``, of 13 MB and 9 MB, are too large to keep
-and are only in the cache, and mirrored on the Hugging Face Hub as
+``z3test``'s ``regressions/nl``, of 13 MB and 9 MB, are too large to keep:
+they are in the clone, and are read from their Hugging Face mirror when
+GitHub cannot be reached or, beside ``data/``, under the global option of
+:mod:`~sympy_extras_benchmarks.huggingface`. The mirror is
 `Upabjojr/z3test-nl-large
 <https://huggingface.co/datasets/Upabjojr/z3test-nl-large>`_. Only the formulas and the recorded
 ``sat``/``unsat`` answers are read.
@@ -115,6 +117,7 @@ from sympy.core.singleton import S
 from sympy_extras.assumptions import Exists, ForAll
 from sympy_extras._typing import as_boolean, as_expr
 
+from sympy_extras_benchmarks import huggingface
 from sympy_extras_benchmarks.cache import bundled, cache_directory
 from sympy_extras_benchmarks.datasets.smtlib import SExpr, SMTLibError, parse, tokenize
 
@@ -610,6 +613,10 @@ def fetch() -> list[pathlib.Path]:
                 if p is not None]
         if kept:
             directories.extend(kept)
+            # data/ lacks the two large z3test files: the global option adds
+            # them from their mirror
+            if key == 'z3' and huggingface.preferred():
+                directories.extend(_z3_large_from_hub())
             continue
         clone = cache_directory() / ('solver-regressions-' + key)
         present = [clone / s for s in subtrees if (clone / s).is_dir()]
@@ -622,9 +629,29 @@ def fetch() -> list[pathlib.Path]:
             subprocess.run(['git', '-C', str(clone), 'sparse-checkout', 'set', *subtrees],
                            check=True, capture_output=True, timeout=1800)
         except (subprocess.SubprocessError, OSError):
+            # the mirror holds only the two large files, so it replaces the
+            # clone only when GitHub cannot be reached, never under the option
+            if key == 'z3':
+                directories.extend(_z3_large_from_hub())
             continue
         directories.extend(clone / s for s in subtrees if (clone / s).is_dir())
     return directories
+
+
+#: the two files of ``z3test``'s ``regressions/nl`` too large for ``data/``
+Z3_LARGE_FILES: tuple[str, ...] = ('fastmul-unfolded-l-native-nl-wrapped.smt2',
+                                   'helperlemma-l-native-nl-wrapped.smt2')
+
+
+def _z3_large_from_hub() -> list[pathlib.Path]:
+    """The directory of the two large ``z3test`` files, downloaded from their
+    Hugging Face mirror; empty when the Hub cannot be reached."""
+    directory = cache_directory() / 'z3test-nl-large-huggingface' / 'regressions' / 'nl'
+    for name in Z3_LARGE_FILES:
+        if huggingface.download(huggingface.Z3TEST_NL_LARGE, 'regressions/nl/' + name,
+                                directory / name) is None:
+            return []
+    return [directory]
 
 
 def load() -> list[pathlib.Path]:

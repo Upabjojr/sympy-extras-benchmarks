@@ -37,7 +37,7 @@ repository (see [Results](#results)).
 | `lean_tactics` | The tactic tests of Lean's **mathlib4** for arithmetic (`linarith`, `positivity`), polynomial identities (`linear_combination`, `ring`) and numeral evaluation (`norm_num`), each with a machine-checked proof | Lean 4 `example` blocks, parsed to SymPy formulas by the grammar of `prover_syntax`; kept in `data/mathlib4/` | 13 files, 1573 examples, 443 usable goals of which 323 are not settled by SymPy's own evaluation |
 | `coq_micromega` | The **micromega** test suite of the Rocq/Coq standard library (`lia`, `nia`, `lra`, `psatz`): mostly nonlinear goals over `Z`, `Q`, `R` and `nat`, one file per historical bug, each closed by `Qed` | Rocq `Lemma`/`Goal` statements, parsed to SymPy formulas by the grammar of `prover_syntax`; kept in `data/rocq-stdlib/` | 38 files, 285 statements, 119 usable goals (none of them trivial), 105 over the integers |
 | `polynomial_solving` | The systems of Maxima's `algsys` regression file (`tests/rtest_algsys.mac`): the examples of Beyer (1984) and Morgan (1983), plus the ones that later broke `algsys` — positive-dimensional components, solutions real in the paper and complex in fact, and one where the published answer is wrong | Maxima `.mac`, read with the expression parser of `maxima_ode`; the recorded solutions are counted but are not the answer key | 51 systems, 1 to 13 equations, 1 to 6 unknowns |
-| `tptp_arithmetic` | The arithmetic (`ARI`) domain of the **TPTP** problem library: several hundred TFF problems over `$int` and `$real`, each with the `Status` its authors recorded. Written to be hard for provers rather than to exercise a tactic | TFF, parsed by a recursive descent parser for the arithmetic fragment; `Problems/ARI` extracted from the official distribution | 700 problems, 189 usable (179 `Theorem`, 10 `CounterSatisfiable`), 122 over the integers |
+| `tptp_arithmetic` | The arithmetic (`ARI`) domain of the **TPTP** problem library: several hundred TFF problems over `$int` and `$real`, each with the `Status` its authors recorded. Written to be hard for provers rather than to exercise a tactic | TFF, parsed by a recursive descent parser for the arithmetic fragment; `Problems/ARI` of TPTP v9.3.1, kept verbatim in `data/tptp/` | 700 problems, 189 usable (179 `Theorem`, 10 `CounterSatisfiable`), 122 over the integers |
 | `reduce_odes` | The ODE test suite of **REDUCE**'s `ODESolve`, whose core is the **Postel–Zimmermann** collection — the equations of their 1996 review of the ODE solvers of seven computer algebra systems, chosen to tell systems apart | REDUCE `.tst`, rewritten into Maxima syntax (implicit multiplication, bracketless calls, `df`) and read with the parser of `maxima_ode`; kept in `data/reduce/` | 6 files, 233 `odesolve` calls, 88 usable equations of order 1 to 7 |
 | `maxima_limits` | Maxima's four limit regression files: the main one (a bug per entry), a larger collection, the examples of **Gruntz's 1996 thesis** — the algorithm modern CAS limits come from — and the limit problems of **Wester's** *Critique of the Mathematical Abilities of CA Systems* | Maxima `.mac`, read with the expression parser of `maxima_ode`; a call while an `assume` is in force is refused, as are `und` and `ind` | 4 files, ~1070 calls, 354 usable limits (300 with a recorded value) |
 | `pde_symmetries` | Twelve classical PDEs (heat, Burgers, KdV, wave, nonlinear diffusion, Fisher, Boussinesq, Liouville, sine-Gordon, potential Burgers, Black-Scholes) with the dimension of their point symmetry algebra from Olver, Bluman-Kumei and Ibragimov's handbook | translated into SymPy expressions | 12 equations |
@@ -225,11 +225,12 @@ python -m pyflakes sympy_extras_benchmarks conftest.py scripts
 Every dataset is read from an upstream project. **The files of each are
 committed to `data/`, verbatim and in their own language, under the licence of
 that upstream** — see [`data/README.md`](data/README.md) for the directory, the
-version and the licence of each. Two collections are not kept: the full SMT-LIB
-2025 release (3.3 GB unpacked) because of its size, and the TPTP `ARI` domain
-because TPTP's terms are not a grant to redistribute it; those are fetched on
-first use into `.cache/` (or `$SYMPY_EXTRAS_BENCHMARKS_CACHE`), which is
-gitignored. A local copy of any of them can be pointed to with the environment
+version and the licence of each. What is too large for `data/` — the full
+SMT-LIB 2025 release (3.3 GB unpacked), the Brown–Vale-Enriquez data of Tarski
+(623 MB) and two large `z3test` files — is fetched on first use into `.cache/`
+(or `$SYMPY_EXTRAS_BENCHMARKS_CACHE`), which is gitignored. The TPTP `ARI` domain
+is kept in `data/tptp/` under the TPTP's own terms, which are **not an open
+licence**: they permit verbatim, attributed redistribution only. A local copy of any of them can be pointed to with the environment
 variable in the last column, which is read before `data/`.
 
 The collections too large for `data/` are mirrored on the Hugging Face Hub, each
@@ -239,8 +240,16 @@ and `NRA` archives, CC BY 4.0),
 [`Upabjojr/tarski-brown-vale-enriquez-2019`](https://huggingface.co/datasets/Upabjojr/tarski-brown-vale-enriquez-2019)
 (the Brown–Vale-Enriquez conjunctions of Tarski, ISC) and
 [`Upabjojr/z3test-nl-large`](https://huggingface.co/datasets/Upabjojr/z3test-nl-large) (two large `z3test`
-regressions, MIT). `scripts/huggingface_upload.py` builds and uploads them; see
+regressions, MIT) and [`Upabjojr/tptp-v9.3.1`](https://huggingface.co/datasets/Upabjojr/tptp-v9.3.1)
+(the whole TPTP distribution, a verbatim preservation copy under the TPTP's
+restricted terms). `scripts/huggingface_upload.py` builds and uploads them; see
 [`data/README.md`](data/README.md#the-large-collections-on-the-hugging-face-hub).
+
+A download goes to the upstream server first and falls back to the Hub mirror
+when the server cannot be reached. **`--huggingface`** (anywhere on the command
+line of `python -m sympy_extras_benchmarks`), or
+`SYMPY_EXTRAS_BENCHMARKS_HUGGINGFACE=1`, makes the Hub mirrors the first choice
+instead, with the upstreams as the fallback.
 
 The licence file of each upstream project is kept with its data, in `data/` and
 in the sparse clones alike. A dataset module names its licence and those files
@@ -255,7 +264,7 @@ in the sparse clones alike. A dataset module names its licence and those files
 | Maxima `tests/rtestint.mac`, `rtest_integrate.mac`, `rtest_laplace.mac`, `rtest_hypgeo.mac` and `wester_problems/test_definite_integrals.mac` — definite integrals and Laplace transforms | as above | GPL-2.0; Wester's problems were released under it by their author (`wester-gpl-permission-message.txt`) | the calls, the facts in force when they run, and the recorded values, the latter as a third opinion only | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
 | Maxima `tests/rtest_integrate.mac`, `rtestint.mac`, `rtest14.mac`, `rtest7.mac` and `wester_problems/test_indefinite_integrals.mac` — indefinite integrals | as above | GPL-2.0, Wester's problems as above | the two-argument calls, the facts in force, and the recorded antiderivatives, the latter as a third opinion only | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
 | FriCAS `src/input/integ.input` — indefinite integrals | sparse clone of `fricas/fricas` (`src/input`) | modified BSD (`LICENSE.txt`) | the integrands and variables of the `testIntegrate` assertions and the `testEquals` references; the `xf` expected failures and FriCAS's answers in comments are not read | `$SYMPY_EXTRAS_BENCHMARKS_FRICAS` |
-| TPTP `ARI` domain | [tptp.org](https://tptp.org) | distributed by Geoff Sutcliffe under TPTP's own terms; each problem is the work of the authors named in its header | the formulas and the recorded `Status` | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |
+| TPTP `ARI` domain | [tptp.org](https://tptp.org) | copyright Geoff Sutcliffe & Christian Suttner: verbatim redistribution permitted with attribution, modification only with permission; each problem is the work of the authors named in its header | the formulas and the recorded `Status` | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |
 | REDUCE `ODESolve` tests — the Postel–Zimmermann collection | [`reduce-algebra/reduce-algebra`](https://github.com/reduce-algebra/reduce-algebra) | *Reduce License*, a BSD 2-clause style licence (`LICENSE`) | the equations only. **REDUCE's solutions and code are not used** | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
 | REDUCE DEFINT tests — Gaskell's collection | [`reduce-algebra/reduce-algebra`](https://github.com/reduce-algebra/reduce-algebra), `packages/defint` | *Reduce License*, a BSD 2-clause style licence (`LICENSE`) | the four-argument `int` calls. **REDUCE's results (`defint.rlg`), the transforms and the code are not used** | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
 | SMT-LIB `QF_NRA` — the Meti-Tarski family | [`dreal/benchmarks`](https://github.com/dreal/benchmarks) (a mirror) | no license file in the mirror; the SMT-LIB benchmarks carry their own terms | the formulas and the `:status` | `$SYMPY_EXTRAS_BENCHMARKS_SMTLIB` |
@@ -303,8 +312,10 @@ in this repository, that is everything outside `data/`.
 **The collections in `data/` are not covered by it.** Each keeps the licence of
 its upstream, which travels with it: GPL-2.0 for Maxima's test files, LGPL-2.1
 for the Rocq standard library, Apache-2.0 for mathlib4, MIT for `z3test`,
-CC BY 4.0 for the SMT-LIB problems, CC BY-SA 4.0 for the Bath example bank, and
-BSD-style licences for FriCAS, REDUCE, holpy, cvc5, QEPCAD B and Tarski.
+CC BY 4.0 for the SMT-LIB problems, CC BY-SA 4.0 for the Bath example bank,
+BSD-style licences for FriCAS, REDUCE, holpy, cvc5, QEPCAD B and Tarski, and the
+TPTP's own terms for `data/tptp/` — not an open licence: verbatim, attributed
+redistribution only, and no modification without permission.
 Redistributing this repository means redistributing those files under those
 licences; [`data/README.md`](data/README.md) lists every one of them with the
 licence file that carries it.

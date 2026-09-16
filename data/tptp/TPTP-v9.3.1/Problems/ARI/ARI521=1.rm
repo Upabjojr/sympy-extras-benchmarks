@@ -1,0 +1,19 @@
+%------------------------------------------------------------------------------
+% File     : ARI521=1 : TPTP v9.3.1. Bugfixed v5.3.0.
+% Domain   : Arithmetic
+% Problem  : Mixed: Evaleq sum 5/8 coerced to integer and 34 is something
+% Version  : Biased.
+% English  :
+
+% Refs     :
+% Source   : [TPTP]
+% Names    :
+
+% Status   : Theorem
+% Rating   : 0.57 v5.2.0, 0.60 v5.1.0, 0.75 v5.0.0
+% Syntax   : 
+% SPC      : TFF_THM_NEQ_ARI
+
+% Comments :
+% Bugfixes : v5.1.1 - Removed because it contained $evaleq.
+%------------------------------------------------------------------------------

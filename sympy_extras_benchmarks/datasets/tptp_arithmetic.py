@@ -38,13 +38,19 @@ What is refused
 Source and licence
 ==================
 
-The TPTP library is distributed by Geoff Sutcliffe under its own terms
-(see ``https://tptp.org``); the problems are the work of their individual
-authors, recorded in each file's header. Nothing is stored in this
-repository: the ``ARI`` domain is extracted on first use from the official
-distribution into the cache directory, or read from a local copy named by
-``$SYMPY_EXTRAS_BENCHMARKS_TPTP``. Only the formulas and the recorded
-``Status`` are read.
+The TPTP is copyrighted by Geoff Sutcliffe and Christian Suttner, and is
+not under an open licence; the problems are the work of their individual
+authors, recorded in each file's header. Its terms (``Documents/ReadMe`` of
+the distribution) permit verbatim redistribution of the TPTP and of parts of
+it, clearly attributed to the TPTP, and require permission for a modified
+version. Under that permission the ``ARI`` domain is kept verbatim in
+``data/tptp/``, with the ReadMe and the attribution in ``data/tptp/NOTICE``
+(see ``data/README.md``), and read from there, or from a local copy named by
+``$SYMPY_EXTRAS_BENCHMARKS_TPTP``. Without either it is extracted from the
+official distribution into the cache; the whole distribution is also
+preserved verbatim on the Hugging Face Hub as `Upabjojr/tptp-v9.3.1
+<https://huggingface.co/datasets/Upabjojr/tptp-v9.3.1>`_. Only the formulas
+and the recorded ``Status`` are read.
 
 Examples
 ========
@@ -69,7 +75,7 @@ import pathlib
 import re
 import tarfile
 import urllib.request
-from typing import Optional
+from typing import BinaryIO, Callable, Optional
 
 from sympy import Abs, And, Eq, Equivalent, Implies, Ne, Not, Or, Symbol, Xor
 from sympy.core.expr import Expr
@@ -81,7 +87,8 @@ from sympy.sets.sets import Set
 from sympy_extras.assumptions import Exists, ForAll
 from sympy_extras._typing import as_boolean, as_expr
 
-from sympy_extras_benchmarks.cache import cache_directory
+from sympy_extras_benchmarks import huggingface
+from sympy_extras_benchmarks.cache import bundled, cache_directory
 
 __all__ = ['TPTPProblem', 'TPTPError', 'DISTRIBUTION', 'TYPES', 'fetch', 'load', 'problem']
 
@@ -408,9 +415,16 @@ def problem(text: str, name: str = '') -> Optional[TPTPProblem]:
 
 def fetch() -> list[pathlib.Path]:
     """The ``ARI`` problem files: from ``$SYMPY_EXTRAS_BENCHMARKS_TPTP``,
-    or extracted from the distribution into the cache on first use."""
+    from ``data/tptp/``, or extracted from the distribution into the cache
+    on first use. The
+    distribution is read from a copy of it in the cache, from tptp.org, or
+    from its Hugging Face mirror when tptp.org cannot be reached or under
+    the global option of :mod:`~sympy_extras_benchmarks.huggingface`."""
     override = os.environ.get(ENVIRONMENT_VARIABLE)
     roots = [pathlib.Path(override)] if override else []
+    kept = bundled('tptp')
+    if kept is not None:
+        roots.append(kept)
     roots.append(cache_directory() / 'tptp')
     for root in roots:
         if root.is_dir():
@@ -419,15 +433,31 @@ def fetch() -> list[pathlib.Path]:
                 return found
     target = cache_directory() / 'tptp'
     target.mkdir(parents=True, exist_ok=True)
-    try:
-        with urllib.request.urlopen(DISTRIBUTION, timeout=3600) as response:
-            with tarfile.open(fileobj=response, mode='r|gz') as archive:
+    local = target / DISTRIBUTION.rsplit('/', 1)[1]
+
+    def extract(stream: Callable[[], BinaryIO]) -> list[pathlib.Path]:
+        try:
+            with stream() as source, tarfile.open(fileobj=source, mode='r|gz') as archive:
                 for member in archive:
                     if '/Problems/ARI/' in member.name and member.name.endswith('.p'):
                         archive.extract(member, target, filter='data')
-    except (OSError, tarfile.TarError, ValueError):
-        return []
-    return sorted(target.rglob('ARI*.p'))
+        except (OSError, tarfile.TarError, ValueError):
+            return []
+        return sorted(target.rglob('ARI*.p'))
+
+    def tptp_org() -> list[pathlib.Path]:
+        return extract(lambda: urllib.request.urlopen(DISTRIBUTION, timeout=3600))
+
+    def hub() -> list[pathlib.Path]:
+        if huggingface.download(huggingface.TPTP, local.name, local) is None:
+            return []
+        return extract(lambda: open(local, 'rb'))
+
+    if local.is_file():
+        found = extract(lambda: open(local, 'rb'))
+        if found:
+            return found
+    return huggingface.first(tptp_org, hub) or []
 
 
 def load() -> list[TPTPProblem]:

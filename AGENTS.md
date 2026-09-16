@@ -14,6 +14,7 @@ specific to this repository follow.
 ```
 sympy_extras_benchmarks/
     cache.py                 where the collections are found: data/ first, then the cache
+    huggingface.py           the Hub mirrors of the large collections, and the upstream-or-Hub order
     datasets/
         maxima_ode.py        parser of Maxima's contrib_ode test files: Kamke and Murphy collections
         smtlib.py            SMT-LIB 2 parser (QF_NRA): the Meti-Tarski family
@@ -66,7 +67,12 @@ results/                     runs written by --output, ignored by git
   `$SYMPY_EXTRAS_BENCHMARKS_CACHE`), which is gitignored: a collection is
   left out only when it is too large (the SMT-LIB release, 3.3 GB; the
   Brown--Vale-Enriquez data of Tarski, 623 MB; two machine-generated files
-  of `z3test`) or when its terms do not grant redistribution (TPTP).
+  of `z3test`) or when its terms do not grant redistribution. Those large
+  collections are mirrored on the Hugging Face Hub
+  (`sympy_extras_benchmarks.huggingface`): a download falls back to the
+  mirror when the upstream is unreachable, and the global option
+  (`--huggingface`, `$SYMPY_EXTRAS_BENCHMARKS_HUGGINGFACE=1`) tries the
+  mirror first. A new download must go through `huggingface.first`.
   The upstream projects and their licences, each read from the licence file
   in the source tree:
 
@@ -84,7 +90,7 @@ results/                     runs written by --output, ignored by git
   | Tarski tests (`tarski_tests`) | `chriswestbrown/tarski` | ISC-style | `data/tarski/`; the Brown data on the Hub, `Upabjojr/tarski-brown-vale-enriquez-2019` | `$SYMPY_EXTRAS_BENCHMARKS_TARSKI` |
   | mathlib4 tactic tests (`lean_tactics`) | `leanprover-community/mathlib4` | Apache-2.0 | `data/mathlib4/` | `$SYMPY_EXTRAS_BENCHMARKS_MATHLIB` |
   | Rocq micromega tests (`coq_micromega`) | `rocq-prover/stdlib` | LGPL-2.1 | `data/rocq-stdlib/` | `$SYMPY_EXTRAS_BENCHMARKS_ROCQ_STDLIB` |
-  | TPTP `ARI` domain (`tptp_arithmetic`) | tptp.org, official distribution | TPTP's own terms; problems credited in their headers | no: TPTP's terms | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |
+  | TPTP `ARI` domain (`tptp_arithmetic`) | tptp.org, official distribution | TPTP terms: copyright Sutcliffe & Suttner, verbatim redistribution with attribution only; problems credited in their headers | `data/tptp/` (verbatim, never edited); whole distribution on the Hub, `Upabjojr/tptp-v9.3.1` | `$SYMPY_EXTRAS_BENCHMARKS_TPTP` |
   | Postel-Zimmermann ODEs (`reduce_odes`) | `reduce-algebra/reduce-algebra` | Reduce License (BSD 2-clause style) | `data/reduce/` | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |
   | integration and transform tests (`maxima_integrals`) | Maxima, `tests/` | GPL-2.0 | `data/maxima/` | `$SYMPY_EXTRAS_BENCHMARKS_MAXIMA_TESTS` |
   | DEFINT tests (`reduce_defint`) | `reduce-algebra/reduce-algebra` | Reduce License (BSD 2-clause style) | `data/reduce/` | `$SYMPY_EXTRAS_BENCHMARKS_REDUCE` |

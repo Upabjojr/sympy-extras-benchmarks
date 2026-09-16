@@ -1,10 +1,20 @@
-"""Command line entry point: ``python -m sympy_extras_benchmarks DRIVER
-[options]`` runs one of the drivers; ``--list`` names them."""
+"""Command line entry point: ``python -m sympy_extras_benchmarks
+[--huggingface] DRIVER [options]`` runs one of the drivers; ``--list``
+names them.
+
+``--huggingface`` is the global option of
+:mod:`~sympy_extras_benchmarks.huggingface`: a collection which has to be
+downloaded comes from its Hugging Face mirror first, and from the upstream
+server only when the Hub cannot be reached. Without it the upstream comes
+first and the mirror is the fallback. It may appear anywhere on the line.
+"""
 from __future__ import annotations
 
 import importlib
 import sys
 from typing import Callable, Optional
+
+from sympy_extras_benchmarks import huggingface
 
 #: the drivers, with one line each
 DRIVERS: dict[str, str] = {
@@ -35,8 +45,14 @@ DRIVERS: dict[str, str] = {
 
 def main(argv: Optional[list[str]] = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
+    if '--huggingface' in args:
+        args = [a for a in args if a != '--huggingface']
+        huggingface.enable()
     if not args or args[0] in ('-h', '--help', '--list'):
-        print("usage: python -m sympy_extras_benchmarks DRIVER [options]\n\ndrivers:")
+        print("usage: python -m sympy_extras_benchmarks [--huggingface] DRIVER [options]\n\n"
+              "  --huggingface        download the large collections from their Hugging Face\n"
+              "                       mirrors first (also $%s=1)\n\ndrivers:"
+              % huggingface.ENVIRONMENT_VARIABLE)
         for name, line in DRIVERS.items():
             print("  %-20s %s" % (name, line))
         return 0 if args else 2

@@ -1,0 +1,19 @@
+%------------------------------------------------------------------------------
+% File     : ARI160=1 : TPTP v9.3.1. Bugfixed v5.3.0.
+% Domain   : Arithmetic
+% Problem  : Integer: Evaleq something is product of 2 and sum of 5 and -3
+% Version  : Biased.
+% English  :
+
+% Refs     :
+% Source   : [TPTP]
+% Names    :
+
+% Status   : Theorem
+% Rating   : 0.43 v5.2.0, 0.40 v5.1.0, 0.50 v5.0.0
+% Syntax   : 
+% SPC      : TFF_THM_NEQ_ARI
+
+% Comments :
+% Bugfixes : v5.1.1 - Removed because it contained $evaleq.
+%------------------------------------------------------------------------------

@@ -1,0 +1,25 @@
+The arithmetic domain of the TPTP problem library
+=================================================
+
+    TPTP-v9.3.1/Problems/ARI/   the 700 problems of the ARI domain
+    TPTP-v9.3.1/Documents/ReadMe  the TPTP's own ReadMe, with its terms
+
+are copied verbatim from the TPTP problem library, version 9.3.1, as
+distributed at https://tptp.org/TPTP/Distribution/TPTP-v9.3.1.tgz.
+
+This is the TPTP: Thousands of Problems for Theorem Provers, by Geoff
+Sutcliffe and Christian Suttner (https://tptp.org). The problems are the work
+of their individual authors, credited in the header of each file.
+
+The TPTP is not under an open licence. Its terms, from Documents/ReadMe:
+
+    The TPTP is copyrighted 1993-onwards, by Geoff Sutcliffe & Christian
+    Suttner. Verbatim redistribution of the TPTP and parts of the TPTP is
+    permitted provided that the redistribution is clearly attributed to the
+    TPTP. Distribution of any modified version or modified part of the TPTP
+    requires permission.
+
+These files are redistributed verbatim under that permission, and this
+notice is the attribution. Do not modify them: a modified version requires
+the permission of the TPTP's authors. The whole distribution is preserved,
+equally verbatim, at https://huggingface.co/datasets/Upabjojr/tptp-v9.3.1.

@@ -122,5 +122,17 @@ and the attribution) is kept beside each collection:
       License:  Creative Commons Attribution 4.0 International
       Text:     data/meti-tarski/NOTICE
 
+  data/tptp/
+      The ARI (arithmetic) domain of the TPTP problem library, v9.3.1, and
+      its Documents/ReadMe. Copyright 1993-onwards Geoff Sutcliffe &
+      Christian Suttner; each problem is the work of the authors credited
+      in its header. https://tptp.org
+      License:  NOT an open licence. The TPTP's terms permit verbatim
+                redistribution of the TPTP and parts of it, clearly
+                attributed to the TPTP; distributing a modified version
+                or part requires permission.
+      Text:     data/tptp/NOTICE
+                data/tptp/TPTP-v9.3.1/Documents/ReadMe
+
 data/README.md lists the same collections with the upstream version each
 copy was taken from.

@@ -1,7 +1,7 @@
 """Stage the collections too large for ``data/`` and upload them to the
 Hugging Face Hub.
 
-Three collections are not kept in the repository (see ``data/README.md``).
+Four collections are not kept in the repository (see ``data/README.md``).
 This script puts each into a dataset repository of its own, because each
 has its own licence and a Hub dataset card declares exactly one:
 
@@ -18,6 +18,11 @@ has its own licence and a Hub dataset card declares exactly one:
 ``z3test-nl-large``
     The two machine-generated files of ``z3test``'s ``regressions/nl``
     (13 MB and 9 MB). MIT licence.
+``tptp-v9.3.1``
+    The TPTP distribution as tptp.org publishes it (``TPTP-v9.3.1.tgz``,
+    891 MB). A preservation copy, verbatim as TPTP's terms require: its
+    licence is marked ``other``, and the card quotes those terms and says
+    that the copyright is restricted.
 
 Every file keeps its source language (SMT-LIB 2, and the formula lists of
 Tarski); nothing is translated. The licence text of each upstream and a
@@ -26,10 +31,10 @@ dataset card with the attribution are written beside the data, and
 
 Usage::
 
-    python scripts/huggingface_upload.py                      # stage all three
+    python scripts/huggingface_upload.py                      # stage all four
     python scripts/huggingface_upload.py --only z3test-nl-large
     hf auth login                                             # once
-    python scripts/huggingface_upload.py --upload --namespace NAME [--public]
+    python scripts/huggingface_upload.py --upload [--namespace NAME] [--public]
 
 Staging reads the downloads of the cache, making them first through the
 dataset modules when they are missing, and writes to
@@ -40,8 +45,11 @@ interrupted upload. ``huggingface_hub`` is needed only for ``--upload``.
 
 The repositories are published under the ``Upabjojr`` namespace:
 https://huggingface.co/datasets/Upabjojr/smtlib-2025-nra,
-https://huggingface.co/datasets/Upabjojr/tarski-brown-vale-enriquez-2019 and
-https://huggingface.co/datasets/Upabjojr/z3test-nl-large.
+https://huggingface.co/datasets/Upabjojr/tarski-brown-vale-enriquez-2019,
+https://huggingface.co/datasets/Upabjojr/z3test-nl-large and
+https://huggingface.co/datasets/Upabjojr/tptp-v9.3.1. The datasets download
+from these names (``sympy_extras_benchmarks.huggingface``), so a repository
+uploaded under another ``--namespace`` is not one they will read.
 """
 from __future__ import annotations
 
@@ -51,12 +59,14 @@ import pathlib
 import shutil
 import subprocess
 import sys
+import urllib.request
 from typing import Callable, Optional
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from sympy_extras_benchmarks.cache import cache_directory, data_directory  # noqa: E402
+from sympy_extras_benchmarks import huggingface  # noqa: E402
 
 #: the default directory the repositories are staged in
 STAGING = 'huggingface-staging'
@@ -240,12 +250,87 @@ Copyright (c) Microsoft Corporation, distributed under the **MIT** licence
 """)
 
 
+def stage_tptp(target: pathlib.Path, level: int) -> None:
+    from sympy_extras_benchmarks.datasets import tptp_arithmetic
+    name = tptp_arithmetic.DISTRIBUTION.rsplit('/', 1)[1]
+    archive = cache_directory() / 'tptp' / name
+    if not archive.is_file():
+        partial = archive.with_name(name + '.partial')
+        archive.parent.mkdir(parents=True, exist_ok=True)
+        with urllib.request.urlopen(tptp_arithmetic.DISTRIBUTION, timeout=3600) as response, \
+                open(partial, 'wb') as sink:
+            shutil.copyfileobj(response, sink, 1 << 20)
+        partial.replace(archive)
+    _copy(archive, target / name)
+    version = name[len('TPTP-'):-len('.tgz')]
+    _card(target, 'other', 'TPTP problem library %s (preservation copy)' % version, """
+# The TPTP problem library, %(version)s — a preservation copy
+
+The **TPTP** (Thousands of Problems for Theorem Provers) is the standard library
+of test problems for automated theorem proving, created by **Geoff Sutcliffe and
+Christian Suttner** and maintained by Geoff Sutcliffe, with problems contributed
+by many authors over three decades. Its home is **https://tptp.org**, and that
+is where it should be obtained, cited and credited.
+
+`%(name)s` is the distribution exactly as tptp.org publishes it at
+`%(url)s`, **verbatim, byte for byte**: problems, axioms, generators, documents
+and the `TPTP2X` utility, in their original TPTP syntax (CNF, FOF, TFF, THF).
+`SHA256SUMS` lists its checksum.
+
+## Why this copy exists
+
+This copy is made **to ensure that this knowledge will not be lost by
+humanity**. The TPTP is a unique, decades-long record of mathematical and logical
+problems and of the reasoning systems built to solve them, and it is hosted in
+essentially one place. This mirror is a safeguard against that single point of
+failure; it is not a replacement for the original, and it is not an endorsement
+by the TPTP's authors.
+
+## Copyright — please read
+
+**The copyright of this material is restricted, and its exact scope for your use
+is unsure: check it before you rely on this copy.** The TPTP is not under an
+open licence, which is why the licence of this dataset is marked `other`. Its
+own terms, in `Documents/ReadMe` inside the archive, are:
+
+> The TPTP is copyrighted 1993-onwards, by Geoff Sutcliffe & Christian Suttner.
+> Verbatim redistribution of the TPTP and parts of the TPTP is permitted provided
+> that the redistribution is clearly attributed to the TPTP. Distribution of any
+> modified version or modified part of the TPTP requires permission.
+
+This copy relies on that permission: it is verbatim and attributed to the TPTP.
+Nothing here grants you any further right. In particular:
+
+* **All rights remain with Geoff Sutcliffe & Christian Suttner** and with the
+  authors of the problems, credited in the header of each file.
+* **Distributing a modified version, or a modified part, requires their
+  permission.**
+* Prefer the original distribution at https://tptp.org whenever it is reachable,
+  and check the terms published there.
+* Cite the TPTP as tptp.org asks — G. Sutcliffe, *The TPTP Problem Library and
+  Associated Infrastructure. From CNF to TH0, TPTP v6.4.0*, Journal of Automated
+  Reasoning 59(4), 2017 — and the references in each problem's header.
+* If you are a rights holder and want this copy changed or removed, open a
+  discussion on this dataset and it will be taken down.
+
+[sympy-extras-benchmarks](https://github.com/Upabjojr/sympy-extras-benchmarks)
+reads the arithmetic (`ARI`) domain of this distribution. It downloads from
+tptp.org, and uses this copy only when tptp.org cannot be reached or when its
+user explicitly asks for the Hugging Face mirrors.
+""" % {'version': version, 'name': name, 'url': tptp_arithmetic.DISTRIBUTION})
+
+
 #: the repositories: name, staging function
 COLLECTIONS: dict[str, Callable[[pathlib.Path, int], None]] = {
     'smtlib-2025-nra': stage_smtlib,
     'tarski-brown-vale-enriquez-2019': stage_brown,
     'z3test-nl-large': stage_z3,
+    'tptp-v9.3.1': stage_tptp,
 }
+
+# the names the datasets download from, in sympy_extras_benchmarks.huggingface
+assert sorted('%s/%s' % (huggingface.NAMESPACE, name) for name in COLLECTIONS) == \
+    sorted(huggingface.REPOSITORIES), 'the staged repositories and the mirrors disagree'
 
 
 def upload(directory: pathlib.Path, repository: str, public: bool) -> None:
@@ -264,7 +349,9 @@ def main(argv: Optional[list[str]] = None) -> int:
                         help='where to stage (default: .cache/%s)' % STAGING)
     parser.add_argument('--level', type=int, default=19, help='zstd level of the packed trees')
     parser.add_argument('--upload', action='store_true', help='upload after staging')
-    parser.add_argument('--namespace', help='Hub user or organisation (default: the logged-in user)')
+    parser.add_argument('--namespace', default=huggingface.NAMESPACE,
+                        help='Hub user or organisation (default: %s, where the datasets look)'
+                        % huggingface.NAMESPACE)
     parser.add_argument('--public', action='store_true', help='create public repositories (default: private)')
     args = parser.parse_args(argv)
     staging: pathlib.Path = args.staging or cache_directory() / STAGING
@@ -284,10 +371,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     if not args.upload:
         print('staged; run again with --upload to send them to the Hub')
         return 0
-    namespace: Optional[str] = args.namespace
-    if namespace is None:
-        from huggingface_hub import HfApi
-        namespace = str(HfApi().whoami()['name'])
+    namespace: str = args.namespace
     for name in names:
         repository = '%s/%s' % (namespace, name)
         print('uploading %s to https://huggingface.co/datasets/%s' % (staging / name, repository), flush=True)

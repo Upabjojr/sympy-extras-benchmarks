@@ -1,0 +1,19 @@
+%------------------------------------------------------------------------------
+% File     : ARI470=1 : TPTP v9.3.1. Bugfixed v5.3.0.
+% Domain   : Arithmetic
+% Problem  : Real: Evaleq 2.05 is difference 5.55 and 3.5
+% Version  : Biased.
+% English  :
+
+% Refs     :
+% Source   : [TPTP]
+% Names    :
+
+% Status   : Theorem
+% Rating   : 0.57 v5.2.0, 0.60 v5.1.0, 0.75 v5.0.0
+% Syntax   : 
+% SPC      : TFF_THM_NEQ_ARI
+
+% Comments :
+% Bugfixes : v5.1.1 - Removed because it contained $evaleq.
+%------------------------------------------------------------------------------
