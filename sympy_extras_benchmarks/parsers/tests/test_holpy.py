@@ -26,11 +26,11 @@ def test_values_and_catalans_constant() -> None:
 
 def test_an_integral_and_its_parts() -> None:
     t = Symbol('t')
-    letto = integral('INT t:[0, pi/4]. exp(-t)')
-    assert letto is not None
-    integrando, variabile, basso, alto = letto
-    assert integrando == exp(-t) and variabile == t
-    assert basso == 0 and alto == pi/4
+    read = integral('INT t:[0, pi/4]. exp(-t)')
+    assert read is not None
+    integrand, variable, low, high = read
+    assert integrand == exp(-t) and variable == t
+    assert low == 0 and high == pi/4
     assert integral('(INT t:[0,1]. t)') is not None      # also when bracketed
     assert integral('SUM n. 1/n') is None
 
@@ -45,4 +45,4 @@ def test_conditions_become_relations() -> None:
     k = Symbol('k')
     assert condition('k > 0') == (k > 0)
     assert condition('k != 0') is not None
-    assert condition('k e strano') is None
+    assert condition('k is odd') is None
