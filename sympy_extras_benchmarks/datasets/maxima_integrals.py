@@ -94,12 +94,12 @@ from sympy.logic.boolalg import Boolean
 from sympy_extras._typing import as_boolean, as_expr
 
 from sympy_extras_benchmarks.cache import cache_directory
-from sympy_extras_benchmarks.datasets.integrals import (
-    PROPERTIES, DefiniteIntegral, group, parse, relation, split_arguments)
-from sympy_extras_benchmarks.datasets.maxima_limits import strip_comments
+from sympy_extras_benchmarks.datasets.integrals import PROPERTIES, DefiniteIntegral
 from sympy_extras_benchmarks.datasets.maxima_ode import TESTS_SUBDIRECTORY, fetch as fetch_maxima
+from sympy_extras_benchmarks.parsers.maxima import (
+    application as call, group, parse, relation, split_arguments, statements)
 
-__all__ = ['FILES', 'COLLECTIONS', 'LICENCE', 'LICENCE_FILES', 'statements', 'integrals', 'fetch',
+__all__ = ['FILES', 'COLLECTIONS', 'LICENCE', 'LICENCE_FILES', 'integrals', 'fetch',
            'load', 'licence_files']
 
 #: each collection: the file, where it lives in Maxima's repository, and
@@ -133,48 +133,8 @@ _PRESERVING = frozenset({
     'demoivre', 'exponentialize', 'float', 'bfloat', 'numer'})
 #: ``name: value``, but not ``name:: value`` or ``name := body``
 _ASSIGNMENT = re.compile(r"([A-Za-z_%][\w%]*)\s*:(?![:=])(.*)", re.S)
-#: ``name(arguments)`` spanning a whole item
-_APPLICATION = re.compile(r"([A-Za-z_]\w*)\s*\(", re.S)
 _LOOP = re.compile(r"\b(for|do|thru|while|unless)\b")
 _PRINCIPAL = re.compile(r"intanalysis\s*[=:]\s*false")
-
-
-def statements(text: str) -> list[str]:
-    """The statements of a Maxima file, comments removed, without their
-    ``;`` or ``$``.
-
-    >>> statements('a: 1$ /* not ; here */ f(x; y); "s;t";')
-    ['a: 1', 'f(x; y)', '"s;t"']
-    """
-    body = strip_comments(text)
-    found: list[str] = []
-    depth, start, quoted = 0, 0, False
-    for index, character in enumerate(body):
-        if character == '"' and (index == 0 or body[index - 1] != '\\'):
-            quoted = not quoted
-        elif quoted:
-            continue
-        elif character in '([{':
-            depth += 1
-        elif character in ')]}':
-            depth = max(0, depth - 1)
-        elif character in ';$' and depth == 0:
-            statement = body[start:index].strip()
-            if statement:
-                found.append(statement)
-            start = index + 1
-    return found
-
-
-def _application(item: str) -> Optional[tuple[str, list[str]]]:
-    """``(name, arguments)`` when ``item`` is one call and nothing else."""
-    match = _APPLICATION.match(item)
-    if match is None:
-        return None
-    closed = group(item, match.end() - 1)
-    if closed is None or closed[1] != len(item):
-        return None
-    return match.group(1), split_arguments(closed[0])
 
 
 class _Context:
@@ -230,7 +190,7 @@ class _Context:
             else:
                 self.values[Symbol(name)] = parse(value)
             return True
-        application = _application(item)
+        application = call(item)
         if application is None:
             return False
         name, arguments = application

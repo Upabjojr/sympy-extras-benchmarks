@@ -45,7 +45,7 @@ from typing import Optional
 
 from sympy_extras_benchmarks import huggingface
 from sympy_extras_benchmarks.cache import bundled, cache_directory, data_directory
-from sympy_extras_benchmarks.datasets.qepcad_syntax import Example
+from sympy_extras_benchmarks.datasets.cad_collections import Example
 
 __all__ = ['REPOSITORY', 'BROWN_SUBTREE', 'ENVIRONMENT_VARIABLE', 'fetch', 'examples', 'brown_files', 'brown_source']
 

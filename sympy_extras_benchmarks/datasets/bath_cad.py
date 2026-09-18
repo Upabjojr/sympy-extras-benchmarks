@@ -15,7 +15,7 @@ CC BY-SA 4.0 licence, in ``data/bath-cad-examples/`` with the attribution
 in its ``NOTICE`` (see ``data/README.md``), and are read from there, or
 from ``$SYMPY_EXTRAS_BENCHMARKS_BATH_CAD``; if neither is there they are
 downloaded into the cache. The QEPCAD inputs are read with
-:mod:`~sympy_extras_benchmarks.datasets.qepcad_syntax`; the bank records
+:mod:`~sympy_extras_benchmarks.parsers.qepcad`; the bank records
 no quantifier-free answers, so a result has to be checked against another
 system. The cell counts are Maple's best, not a minimum a correct CAD must
 reach, and are read only to be reported beside ours.
@@ -32,11 +32,11 @@ from typing import Optional
 
 from sympy import Symbol
 from sympy.core.expr import Expr
-from sympy.parsing.sympy_parser import parse_expr
 
-from sympy_extras._typing import as_expr
 from sympy_extras_benchmarks.cache import bundled, cache_directory
-from sympy_extras_benchmarks.datasets.qepcad_syntax import Example, blocks
+from sympy_extras_benchmarks.parsers.maple import polynomial
+from sympy_extras_benchmarks.datasets.cad_collections import Example
+from sympy_extras_benchmarks.parsers.qepcad import blocks
 
 __all__ = ['FILES', 'ENVIRONMENT_VARIABLE', 'fetch', 'examples', 'PolynomialExample',
            'polynomial_examples', 'cell_counts']
@@ -107,13 +107,6 @@ class PolynomialExample:
         return "PolynomialExample(%s #%d %r)" % (self.section, self.number, self.title)
 
 
-def _maple(text: str, symbols: dict[str, Symbol]) -> Expr:
-    for name in re.findall(r'[A-Za-z_][A-Za-z0-9_]*', text):
-        symbols.setdefault(name, Symbol(name))
-    local: dict[str, object] = dict(symbols)
-    return as_expr(parse_expr(text.replace('^', '**'), local_dict=local))
-
-
 def polynomial_examples() -> list[PolynomialExample]:
     """The examples of the Maple file which are lists of polynomials."""
     directory = fetch()
@@ -128,7 +121,7 @@ def polynomial_examples() -> list[PolynomialExample]:
             names = [v.strip() for v in variables.split(',') if v.strip()]
             for v in names:
                 symbols.setdefault(v, Symbol(v))
-            polynomials = [_maple(p, symbols) for p in polys.split(',') if p.strip()]
+            polynomials = [polynomial(p, symbols) for p in polys.split(',') if p.strip()]
             found.append(PolynomialExample(section, int(number), title.strip(), polynomials,
                                            [symbols[v] for v in names]))
     return found

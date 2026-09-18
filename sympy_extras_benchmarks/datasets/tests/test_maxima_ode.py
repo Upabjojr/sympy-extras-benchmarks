@@ -1,89 +1,14 @@
-"""The Maxima parser on samples written here in the syntax of the test
-files (no network, nothing copied from Maxima)."""
+"""The reader of Maxima's contrib_ode test files on samples written here in
+their layout (no network, nothing copied from Maxima)."""
 from __future__ import annotations
 
-from sympy import (Symbol, Function, Derivative, E, pi, I, Rational, sin, cos,
-    exp, log, sqrt, besselj, legendre, factorial, Abs, atan)
-from sympy.testing.pytest import raises
+from sympy import Symbol, Function, Derivative
 
-from sympy_extras_benchmarks.datasets.maxima_ode import (tokenize, parse_expression,
-    parse_equation, parse_file, derivative_order, MaximaSyntaxError, ODEEntry, x, y)
+from sympy_extras_benchmarks.datasets.maxima_ode import parse_file, ODEEntry
+from sympy_extras_benchmarks.parsers.maxima import x, y
 
 a, b, c, n = Symbol('a'), Symbol('b'), Symbol('c'), Symbol('n')
 f = Function('f')
-
-
-def test_tokenize() -> None:
-    assert tokenize("a+2") == [('name', 'a'), ('op', '+'), ('number', '2')]
-    assert tokenize("%e^-x") == [('name', '%e'), ('op', '^'), ('op', '-'), ('name', 'x')]
-    assert tokenize("1.5e-3*x**2") == [('number', '1.5e-3'), ('op', '*'), ('name', 'x'),
-                                       ('op', '**'), ('number', '2')]
-    assert tokenize("'diff(y,x,2)")[0] == ('op', "'")
-    raises(MaximaSyntaxError, lambda: tokenize("a $ b"))
-
-
-def test_arithmetic_and_precedence() -> None:
-    assert parse_expression("a+b*c") == a + b*c
-    assert parse_expression("a-b-c") == a - b - c
-    assert parse_expression("a/b/c") == a/b/c
-    assert parse_expression("-x^2") == -x**2
-    assert parse_expression("2^-x") == 2**(-x)
-    assert parse_expression("a^b^c") == a**(b**c)
-    assert parse_expression("(a+b)^2") == (a + b)**2
-    assert parse_expression("x**3") == x**3
-    assert parse_expression("n!") == factorial(n)
-    assert parse_expression("1/2") == Rational(1, 2)
-    assert parse_expression("0.25*x") == x/4
-    assert parse_expression("+a") == a
-
-
-def test_constants_and_functions() -> None:
-    assert parse_expression("%e^x") == exp(x)
-    assert parse_expression("%pi*%i") == pi*I
-    assert parse_expression("%e") == E
-    assert parse_expression("sin(x)+cos(x)") == sin(x) + cos(x)
-    assert parse_expression("log(x)*sqrt(x)") == log(x)*sqrt(x)
-    assert parse_expression("bessel_j(n,x)") == besselj(n, x)
-    assert parse_expression("legendre_p(n,x)") == legendre(n, x)
-    assert parse_expression("abs(x)") == Abs(x)
-    assert parse_expression("arctan(x)") == atan(x)
-    assert parse_expression("f(x)") == f(x)
-    assert parse_expression("lambda*x") == Symbol('lambda')*x
-    assert parse_expression("gamma") == Symbol('gamma')
-    raises(MaximaSyntaxError, lambda: parse_expression("sin(x, y)"))
-    raises(MaximaSyntaxError, lambda: parse_expression("%pi(x)"))
-
-
-def test_dependent_variable_and_derivatives() -> None:
-    assert parse_expression("y") == y(x)
-    assert parse_expression("'diff(y,x)") == Derivative(y(x), x)
-    assert parse_expression("'diff(y,x,2)") == Derivative(y(x), (x, 2))
-    assert parse_expression("'diff(y,x,1)") == Derivative(y(x), x)
-    assert parse_expression("diff(y,x)") == Derivative(y(x), x)
-    assert parse_expression("'diff(y,x)^2") == Derivative(y(x), x)**2
-    # the verb form of a known function is evaluated
-    assert parse_expression("diff(x^3,x)") == 3*x**2
-    # another pair of variables
-    u, t = Function('u'), Symbol('t')
-    assert parse_expression("'diff(u,t,2)+u", 'u', 't') == Derivative(u(t), (t, 2)) + u(t)
-    raises(MaximaSyntaxError, lambda: parse_expression("'diff(y)"))
-    raises(MaximaSyntaxError, lambda: parse_expression("'x"))
-
-
-def test_equations() -> None:
-    assert parse_expression("'diff(y,x)=a*y") == Derivative(y(x), x) - a*y(x)
-    assert parse_equation("(y+1)*'diff(y,x)=y+x") == (y(x) + 1)*Derivative(y(x), x) - y(x) - x
-    assert parse_equation("4*'diff(y,x)^2=9*x") == 4*Derivative(y(x), x)**2 - 9*x
-    raises(MaximaSyntaxError, lambda: parse_equation("a*x+b"))
-    raises(MaximaSyntaxError, lambda: parse_equation("'diff(y,x)+"))
-    raises(MaximaSyntaxError, lambda: parse_equation("'diff(y,x) x"))
-    raises(MaximaSyntaxError, lambda: parse_equation("ode[3]"))
-
-
-def test_derivative_order() -> None:
-    assert derivative_order(Derivative(y(x), (x, 3)) + Derivative(y(x), x), y(x)) == 3
-    assert derivative_order(y(x) + x, y(x)) == 0
-    assert derivative_order(Derivative(f(x), x), y(x)) == 0
 
 
 SAMPLE = """

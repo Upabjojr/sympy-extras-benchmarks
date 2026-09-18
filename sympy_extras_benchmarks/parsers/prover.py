@@ -1,5 +1,7 @@
 """The small arithmetic language the proof-assistant test suites are read
-in, shared by the mathlib4 and the Rocq/Coq parsers.
+in, shared by the Lean and the Rocq parsers
+(:mod:`~sympy_extras_benchmarks.parsers.lean`,
+:mod:`~sympy_extras_benchmarks.parsers.rocq`).
 
 Lean and Rocq write their arithmetic goals in nearly the same notation
 once the unicode is spelled out: numerals, ``+ - * / ^``, the six
@@ -24,7 +26,7 @@ Examples
 ========
 
 >>> from sympy import Symbol
->>> from sympy_extras_benchmarks.datasets.prover_syntax import proposition
+>>> from sympy_extras_benchmarks.parsers.prover import proposition
 >>> x = Symbol('x')
 >>> proposition('0 < x -> x != 1', {'x': x})
 Implies(0 < x, Ne(x, 1))

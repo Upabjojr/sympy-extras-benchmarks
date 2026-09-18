@@ -63,10 +63,10 @@ import re
 
 from sympy import Symbol
 
-from sympy_extras_benchmarks.datasets.integrals import (
-    DefiniteIntegral, group, parse, split_arguments)
-from sympy_extras_benchmarks.datasets.reduce_odes import (
-    package_directory, strip_comments, to_maxima)
+from sympy_extras_benchmarks.datasets.integrals import DefiniteIntegral
+from sympy_extras_benchmarks.parsers.maxima import group, parse, split_arguments
+from sympy_extras_benchmarks.datasets.reduce_odes import package_directory
+from sympy_extras_benchmarks.parsers.reduce import strip_comments, to_maxima_names
 
 __all__ = ['SUBTREE', 'FILES', 'LICENCE', 'LICENCE_FILES', 'integrals', 'fetch', 'load',
            'licence_files', 'to_maxima_names']
@@ -79,30 +79,6 @@ LICENCE = 'Reduce License (BSD 2-clause style)'
 LICENCE_FILES: tuple[str, ...] = ('LICENSE',)
 
 _CALL = re.compile(r"(?<![\w%])int\s*\(")
-
-#: REDUCE's names (lower case) and Maxima's; a name mapped to one Maxima
-#: does not know is refused by the parser
-_NAMES: dict[str, str] = {
-    'besselj': 'bessel_j', 'bessely': 'bessel_y', 'besseli': 'bessel_i', 'besselk': 'bessel_k',
-    'ei': 'expintegral_ei', 'si': 'expintegral_si', 'ci': 'expintegral_ci',
-    'shi': 'expintegral_shi', 'chi': 'expintegral_chi', 'heaviside': 'unit_step',
-    'fresnel_c': 'reduce_fresnel_c', 'fresnel_s': 'reduce_fresnel_s',
-}
-
-
-def to_maxima_names(text: str) -> str:
-    """A REDUCE expression in Maxima's syntax and names.
-
-    >>> to_maxima_names('x*BesselJ(0,x)*e^(-2x)/infinity + Si(pi*x)')
-    x*bessel_j(0,x)*%e^(-2*x)/inf + expintegral_si(%pi*x)
-    """
-    body = to_maxima(text.lower())
-    body = re.sub(r"(?<![\w%])infinity(?!\w)", 'inf', body)
-    body = re.sub(r"(?<![\w%])pi(?!\w)", '%pi', body)
-    body = re.sub(r"(?<![\w%])e(?![\w(])", '%e', body)
-    for name, maxima in _NAMES.items():
-        body = re.sub(r"(?<![\w%])" + re.escape(name) + r"\s*\(", maxima + '(', body)
-    return body
 
 
 def integrals(text: str, name: str = '') -> list[DefiniteIntegral]:

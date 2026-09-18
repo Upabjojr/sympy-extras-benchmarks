@@ -60,8 +60,9 @@ from typing import Optional
 from sympy import Symbol
 
 from sympy_extras_benchmarks.cache import bundled, cache_directory
-from sympy_extras_benchmarks.datasets.integrals import (
-    DefiniteIntegral, group, parse, split_arguments)
+from sympy_extras_benchmarks.datasets.integrals import DefiniteIntegral
+from sympy_extras_benchmarks.parsers.fricas import joined, to_maxima
+from sympy_extras_benchmarks.parsers.maxima import group, parse, split_arguments
 
 __all__ = ['REPOSITORY', 'SUBTREE', 'FILES', 'integrals', 'to_maxima', 'fetch', 'load',
            'LICENCE', 'LICENCE_FILES', 'licence_files']
@@ -77,44 +78,12 @@ LICENCE_FILES: tuple[str, ...] = ('LICENSE.txt',)
 ENVIRONMENT_VARIABLE = 'SYMPY_EXTRAS_BENCHMARKS_FRICAS'
 
 _STATEMENT = re.compile(r"^\s*([A-Za-z_]\w*)\s*:=\s*integrate\s*\(", re.M)
-#: FriCAS's names and Maxima's
-_NAMES: dict[str, str] = {
-    'real': 'realpart', 'imag': 'imagpart', 'legendreP': 'legendre_p',
-    'hermiteH': 'hermite', 'laguerreL': 'laguerre',
-}
-
-
-def to_maxima(text: str) -> str:
-    """A FriCAS expression in Maxima's syntax and names.
-
-    >>> to_maxima('imag(z)*%pi + legendreP(2, z)**2 - I')
-    imagpart(z)*%pi + legendre_p(2, z)^2 - %i
-    """
-    body = text.replace('**', '^')
-    body = body.replace('%plusInfinity', 'inf').replace('%minusInfinity', 'minf')
-    body = re.sub(r"(?<![\w%])I(?!\w)", '%i', body)
-    for name, maxima in _NAMES.items():
-        body = re.sub(r"(?<![\w%])" + re.escape(name) + r"\s*\(", maxima + '(', body)
-    return body
-
-
-def _uncomment(text: str) -> str:
-    """``text`` without ``--`` comments and system commands, continuation
-    lines (ending in ``_``) joined."""
-    lines = []
-    for line in text.splitlines():
-        stripped = line.lstrip()
-        if stripped.startswith(('--', ')')):
-            lines.append('')
-            continue
-        lines.append(re.sub(r"\s--.*$", '', line))
-    return re.sub(r"_\n", '', "\n".join(lines))
 
 
 def integrals(text: str, name: str = '') -> list[DefiniteIntegral]:
     """Every definite integral of a FriCAS input file that can be read,
     each integral once."""
-    body = _uncomment(text)
+    body = joined(text)
     found: list[DefiniteIntegral] = []
     seen: set[tuple[object, ...]] = set()
     labels: dict[str, int] = {}

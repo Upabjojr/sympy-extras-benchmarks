@@ -42,8 +42,9 @@ from sympy.logic.boolalg import Boolean, Equivalent, Implies
 from sympy_extras.assumptions import Exists, ForAll
 from sympy_extras._typing import as_boolean
 
-from sympy_extras_benchmarks.datasets import smtlib, solver_regressions, tarski_tests
-from sympy_extras_benchmarks.datasets.qepcad_syntax import QEPCADSyntaxError
+from sympy_extras_benchmarks.datasets import solver_regressions, tarski_tests
+from sympy_extras_benchmarks.parsers.smtlib import translate
+from sympy_extras_benchmarks.parsers.qepcad import QEPCADSyntaxError
 from sympy_extras_benchmarks.datasets.smtlib_release import fetch as fetch_release
 from sympy_extras_benchmarks.drivers.cad_examples import problem
 from sympy_extras_benchmarks.oracles.wolfram import Wolfram, WolframError, to_wolfram
@@ -83,7 +84,7 @@ def _smt_problem(identifier: str) -> Optional[tuple[Boolean, list[Symbol], str]]
         path = directory.parent / identifier
     text = path.read_text(errors='replace')
     if logic == 'QF_NRA':
-        parsed = smtlib.translate(text, path.stem)
+        parsed = translate(text, path.stem)
         if parsed is None:
             return None
         return parsed.formula, list(parsed.variables), parsed.status

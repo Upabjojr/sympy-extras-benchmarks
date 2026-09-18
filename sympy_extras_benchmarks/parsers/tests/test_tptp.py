@@ -2,11 +2,13 @@
 (nothing is copied from the problem library)."""
 from __future__ import annotations
 
+from typing import Optional
+
 from sympy import Implies, Ne, S, Symbol
 
 from sympy_extras.assumptions import ForAll
 
-from sympy_extras_benchmarks.datasets.tptp_arithmetic import TPTPProblem, problem
+from sympy_extras_benchmarks.parsers.tptp import TPTPProblem, problem
 
 
 def _one(body: str, status: str = 'Theorem') -> TPTPProblem:
@@ -94,3 +96,41 @@ def test_a_shadowing_binder_does_not_capture() -> None:
     p = _one("tff(c,conjecture, ! [X: $int] : ( $less(0,X) =>"
              " ( ? [X: $int] : $less(X,0) ) ) ).")
     assert p is not None and p.domain is S.Integers
+
+
+def _p(body: str, status: str = 'Theorem') -> Optional[TPTPProblem]:
+    return problem('%% Status   : %s\n%s\n' % (status, body), 'test')
+
+
+# ---------------------------------------------------------------------------
+# problems without variables: the type is implied by the numerals
+
+def test_a_ground_problem_needs_no_type_declaration() -> None:
+    p = _p('tff(a,conjecture, $less(2,3) ).')
+    assert p is not None and p.domain is S.Integers and bool(p.formula) is True
+    q = _p('tff(a,conjecture, ~ $less(3,2) ).')
+    assert q is not None and bool(q.formula) is True
+
+
+def test_a_ground_problem_with_a_decimal_is_read_over_the_reals() -> None:
+    p = _p('tff(a,conjecture, $less(1.5,2.0) ).')
+    assert p is not None and p.domain is S.Reals and bool(p.formula) is True
+
+
+def test_a_ground_problem_with_a_rational_literal() -> None:
+    p = _p('tff(a,conjecture, $less(1/2,1) ).')
+    assert p is not None and p.domain is S.Reals and bool(p.formula) is True
+
+
+def test_a_variable_without_a_declared_type_is_refused() -> None:
+    assert _p('tff(a,conjecture, ! [X] : $less(X,X) ).') is None
+
+
+def test_the_recorded_status_says_what_resolve_must_return() -> None:
+    p = _p('tff(a,conjecture, $less(3,2) ).', status='CounterSatisfiable')
+    assert p is not None and p.expected is False and bool(p.formula) is False
+
+
+def test_a_problem_too_deeply_nested_is_refused_not_crashed() -> None:
+    body = 'tff(a,conjecture, ! [X: $int] : %s $less(0,X) %s).' % ('~ (' * 3000, ')' * 3000)
+    assert _p(body) is None

@@ -22,12 +22,15 @@ in brackets, the variable list in parentheses, the number of free
 variables (the first ones of the list), the prenex formula ending with a
 period, then commands, of which only ``assume [ ... ]`` changes the
 question. :func:`parse_inputs` finds every such input in a text, also in
-the transcript of a session (the prompts are skipped).
+the transcript of a session (the prompts are skipped), and :func:`blocks`
+the input blocks with the commands that follow each.
+
+Nothing here reads a file or knows which collection a text comes from.
 
 Examples
 ========
 
->>> from sympy_extras_benchmarks.datasets.qepcad_syntax import parse_formula
+>>> from sympy_extras_benchmarks.parsers.qepcad import parse_formula
 >>> parse_formula('(E y)[ y^2 = x /\\ 2 y x - 1/2 > 0 ]')
 Exists(y, Eq(y**2, x) & (2*x*y - 1/2 > 0))
 >>> parse_formula('all x, y [ x^2 + b x y + c > 0 ]')
@@ -45,7 +48,7 @@ from sympy.logic.boolalg import And, Boolean, Equivalent, Implies, Not, Or
 from sympy_extras.assumptions import Exists, ForAll
 from sympy_extras._typing import as_boolean, as_expr
 
-__all__ = ['QEPCADSyntaxError', 'UnsupportedSyntax', 'QEPCADInput', 'InputFailure', 'Example', 'blocks',
+__all__ = ['QEPCADSyntaxError', 'UnsupportedSyntax', 'QEPCADInput', 'InputFailure', 'blocks',
            'tokenize', 'parse_formula',
            'parse_inputs']
 
@@ -69,7 +72,7 @@ _EXTENDED = ('F', 'G', 'C')
 def tokenize(text: str) -> list[str]:
     """The tokens of a formula.
 
-    >>> from sympy_extras_benchmarks.datasets.qepcad_syntax import tokenize
+    >>> from sympy_extras_benchmarks.parsers.qepcad import tokenize
     >>> tokenize('(Ex)[x^2 /= 1/2]')
     ['(', 'Ex', ')', '[', 'x', '^', '2', '/=', '1', '/', '2', ']']
     """
@@ -282,7 +285,7 @@ class _Parser:
 
     def power(self) -> Expr:
         base = self.atom()
-        while self.peek() == '^':
+        if self.peek() == '^':
             self.take()
             sign = 1
             if self.peek() in ('+', '-'):
@@ -291,6 +294,10 @@ class _Parser:
             if not exponent.is_Integer:
                 raise QEPCADSyntaxError("the exponent %s is not an integer" % exponent)
             base = as_expr(base**(sign*exponent))
+            if self.peek() == '^':
+                # ``x^2^3`` is not in QEPCAD's grammar, and the two readings
+                # differ (x^8 against x^6): refuse rather than pick one
+                raise QEPCADSyntaxError("chained exponent: write x^(a^b) or (x^a)^b")
         return base
 
     def atom(self) -> Expr:
@@ -412,53 +419,10 @@ def parse_inputs(text: str) -> list[tuple[str, 'QEPCADInput | InputFailure']]:
             found.append((source, QEPCADInput(name, variables, free, formula, assumptions)))
         except QEPCADSyntaxError as error:
             found.append((source, InputFailure(name, error)))
+        except RecursionError:
+            found.append((source, InputFailure(name, QEPCADSyntaxError(
+                "formula too deeply nested to read"))))
     return found
-
-
-class Example:
-    """A problem of a CAD test collection, written in QEPCAD or Tarski syntax.
-
-    Attributes
-    ==========
-
-    collection : str
-        The collection and set it comes from, e.g. ``'qepcad-application'``.
-    name : str
-        Its name in the collection.
-    syntax : str
-        ``'qepcad'`` when :attr:`text` is a QEPCAD input (read with
-        :func:`parse_inputs`), ``'tarski'`` when it is a formula (read with
-        :func:`parse_formula`).
-    text : str
-        The problem as written in the collection.
-    question : str
-        ``'resolve'``: eliminate the quantifiers (decide the formula when
-        every variable is quantified); ``'satisfiable'``: whether the
-        quantifier-free formula has a real solution.
-    expected : str or None
-        The answer the collection records, in Tarski syntax (a formula, or
-        ``true``/``false``); ``None`` when it records none.
-    duplicate_of : str or None
-        The name of an earlier problem of the collections which is the same
-        question, when there is one.
-    """
-
-    def __init__(self, collection: str, name: str, syntax: str, text: str, question: str = 'resolve',
-                 expected: Optional[str] = None, duplicate_of: Optional[str] = None) -> None:
-        self.collection = collection
-        self.name = name
-        self.syntax = syntax
-        self.text = text
-        self.question = question
-        self.expected = expected
-        self.duplicate_of = duplicate_of
-
-    @property
-    def key(self) -> str:
-        return '%s/%s' % (self.collection, self.name)
-
-    def __repr__(self) -> str:
-        return "Example(%r, %r)" % (self.collection, self.name)
 
 
 def blocks(text: str) -> list[tuple[re.Match[str], str]]:

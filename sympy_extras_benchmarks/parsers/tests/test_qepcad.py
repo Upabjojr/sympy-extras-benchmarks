@@ -5,7 +5,7 @@ from sympy import Symbol, Rational, Eq, Ne, Le, And, Or, Not, Implies, Equivalen
 from sympy.testing.pytest import raises
 
 from sympy_extras.assumptions import Exists, ForAll
-from sympy_extras_benchmarks.datasets.qepcad_syntax import (
+from sympy_extras_benchmarks.parsers.qepcad import (
     QEPCADInput, QEPCADSyntaxError, UnsupportedSyntax, parse_formula, parse_inputs, tokenize)
 
 a, b, c, x, y, z = [Symbol(n) for n in 'abcxyz']
@@ -104,3 +104,57 @@ Enter a prenex formula:
     problem = inputs[0][1]
     assert isinstance(problem, QEPCADInput)
     assert problem.formula == Exists(x, Eq(x**2 + c, 0))
+
+
+# ---------------------------------------------------------------------------
+# implicit multiplication
+
+def test_implicit_multiplication() -> None:
+    a, b = Symbol('a'), Symbol('b')
+    assert parse_formula('2 x > 0') == (2*x > 0)
+    assert parse_formula('x y > 0') == (x*y > 0)
+    assert parse_formula('2 x y^2 > 0') == (2*x*y**2 > 0)
+    assert parse_formula('a^2 b > 0') == (a**2*b > 0)
+    assert parse_formula('x(y + 1) > 0') == (x*(y + 1) > 0)
+    assert parse_formula('(x + 1)(x - 1) > 0') == ((x + 1)*(x - 1) > 0)
+    assert parse_formula('-1(x - y) > 0') == (y - x > 0)
+    assert parse_formula('3/2 x > 0') == (Rational(3, 2)*x > 0)
+
+
+def test_a_chained_exponent_is_refused() -> None:
+    # ``x^2^3`` is not in QEPCAD's grammar and the two readings give x^8 or x^6
+    raises(QEPCADSyntaxError, lambda: parse_formula('x^2^3 > 0'))
+    assert parse_formula('(x^2)^3 > 0') == (x**6 > 0)
+
+
+def test_the_exponent_must_be_an_integer() -> None:
+    raises(QEPCADSyntaxError, lambda: parse_formula('x^y > 0'))
+
+
+# ---------------------------------------------------------------------------
+# connectives and quantifiers
+
+def test_connective_precedence() -> None:
+    assert parse_formula('[x > 0 /\\ y > 0] \\/ x < -1') == Or(And(x > 0, y > 0), x < -1)
+    assert parse_formula('~ x > 0 /\\ y > 0') == And(x <= 0, y > 0)
+    assert parse_formula('x > 0 ==> y > 0 ==> x y > 0') == Implies(x > 0, Implies(y > 0, x*y > 0))
+
+
+def test_quantifiers_in_both_syntaxes() -> None:
+    assert parse_formula('(E x)[x^2 = 1]') == Exists(x, Eq(x**2, 1))
+    assert parse_formula('(A x)[x^2 >= 0]') == ForAll(x, x**2 >= 0)
+    assert parse_formula('ex x, y [x y = 1]') == Exists((x, y), Eq(x*y, 1))
+    assert parse_formula('all x [x^2 >= 0]') == ForAll(x, x**2 >= 0)
+    assert parse_formula('ex x [ all y [ x y = 1 ] ]') == Exists(x, ForAll(y, Eq(x*y, 1)))
+
+
+def test_what_sympy_extras_cannot_express_is_refused() -> None:
+    raises(UnsupportedSyntax, lambda: parse_formula('(F x)[x > 0]'))
+    raises(UnsupportedSyntax, lambda: parse_formula('(G x)[x > 0]'))
+    raises(UnsupportedSyntax, lambda: parse_formula('x < _root_2 y^2 - 1'))
+
+
+def test_relations_and_constants() -> None:
+    assert parse_formula('x /= 0') == Ne(x, 0)
+    assert parse_formula('TRUE') == true
+    assert parse_formula('FALSE') == false

@@ -46,8 +46,9 @@ from sympy_extras.assumptions import resolve, satisfiable
 from sympy_extras.polys.cad import CAD, cylindrical_algebraic_decomposition
 
 from sympy_extras_benchmarks.datasets import bath_cad, qepcad_tests, tarski_tests
-from sympy_extras_benchmarks.datasets.qepcad_syntax import (
-    Example, InputFailure, QEPCADSyntaxError, UnsupportedSyntax, parse_formula, parse_inputs)
+from sympy_extras_benchmarks.datasets.cad_collections import Example
+from sympy_extras_benchmarks.parsers.qepcad import (
+    InputFailure, QEPCADSyntaxError, UnsupportedSyntax, parse_formula, parse_inputs)
 from sympy_extras_benchmarks.drivers.smtlib_release import CHECK_TIMEOUT, call, category, check_model, evaluate
 from sympy_extras_benchmarks.runner import JSON, Result, Task, run
 

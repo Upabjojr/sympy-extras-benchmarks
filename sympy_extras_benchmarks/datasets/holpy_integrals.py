@@ -65,21 +65,18 @@ from __future__ import annotations
 import json
 import os
 import pathlib
-import re
 import subprocess
 from typing import Optional, Sequence, Union
 
-from sympy import Catalan, Symbol
+from sympy import Symbol
 from sympy.core.expr import Expr
 from sympy.logic.boolalg import Boolean
 
-from sympy_extras._typing import as_expr
-
 from sympy_extras_benchmarks.cache import bundled, cache_directory
-from sympy_extras_benchmarks.datasets.integrals import (
-    DefiniteIntegral, group, parse, relation, split_arguments)
+from sympy_extras_benchmarks.datasets.integrals import DefiniteIntegral
+from sympy_extras_benchmarks.parsers.holpy import condition as holpy_condition, integral, sides, value
 
-__all__ = ['REPOSITORY', 'SUBTREE', 'integrals', 'to_maxima', 'fetch', 'load',
+__all__ = ['REPOSITORY', 'SUBTREE', 'integrals', 'fetch', 'load',
            'LICENCE', 'LICENCE_FILES', 'licence_files']
 
 REPOSITORY = "https://github.com/bzhan/holpy"
@@ -94,75 +91,6 @@ ENVIRONMENT_VARIABLE = 'SYMPY_EXTRAS_BENCHMARKS_HOLPY'
 #: a JSON value, as the example files hold it
 JSONValue = Union[None, bool, int, float, str, list['JSONValue'], dict[str, 'JSONValue']]
 
-#: holpy's names and Maxima's
-_NAMES: dict[str, str] = {'Gamma': 'gamma', 'B': 'beta'}
-_INTEGRAL = re.compile(r"INT\s+([A-Za-z_]\w*)\s*:\s*\[")
-
-
-def to_maxima(text: str) -> str:
-    """A holpy expression in Maxima's syntax and names.
-
-    >>> to_maxima('Gamma(1/4) ^ 2 / (2 * sqrt(pi)) + B(m, n) - oo')
-    gamma(1/4) ^ 2 / (2 * sqrt(%pi)) + beta(m, n) - inf
-    """
-    body = re.sub(r"(?<![\w%])pi(?!\w)", '%pi', text)
-    body = re.sub(r"(?<![\w%])oo(?!\w)", 'inf', body)
-    for name, maxima in _NAMES.items():
-        body = re.sub(r"(?<![\w%])" + re.escape(name) + r"\s*\(", maxima + '(', body)
-    return body
-
-
-def _value(text: str) -> Optional[Expr]:
-    """A closed-form holpy expression; ``G`` is Catalan's constant."""
-    value = parse(to_maxima(text))
-    if value is None:
-        return None
-    return as_expr(value.xreplace({Symbol('G'): Catalan}))
-
-
-def _unbracketed(text: str) -> str:
-    body = text.strip()
-    while body.startswith('('):
-        closed = group(body, 0)
-        if closed is None or closed[1] != len(body):
-            break
-        body = closed[0].strip()
-    return body
-
-
-def _integral(text: str) -> Optional[tuple[Expr, Symbol, Expr, Expr]]:
-    """``INT x:[a, b]. f`` as its parts, or ``None``."""
-    body = _unbracketed(text)
-    match = _INTEGRAL.match(body)
-    if match is None:
-        return None
-    closed = group(body, match.end() - 1)
-    if closed is None:
-        return None
-    bounds = split_arguments(closed[0])
-    rest = body[closed[1]:].lstrip()
-    if len(bounds) != 2 or not rest.startswith('.'):
-        return None
-    integrand = _value(rest[1:])
-    lower, upper = _value(bounds[0]), _value(bounds[1])
-    if integrand is None or lower is None or upper is None:
-        return None
-    return integrand, Symbol(match.group(1)), lower, upper
-
-
-def _sides(goal: str) -> Optional[tuple[str, str]]:
-    """The two sides of an equation at its top-level ``=``."""
-    depth = 0
-    for index, character in enumerate(goal):
-        if character in '([':
-            depth += 1
-        elif character in ')]':
-            depth -= 1
-        elif (character == '=' and depth == 0 and goal[index - 1:index] not in ('<', '>', '!')
-              and goal[index + 1:index + 2] != '='):
-            return goal[:index], goal[index + 1:]
-    return None
-
 
 def _facts(conditions: JSONValue) -> Optional[list[Boolean]]:
     """The conditions of an entry as relations; ``None`` when one of them
@@ -176,7 +104,7 @@ def _facts(conditions: JSONValue) -> Optional[list[Boolean]]:
         text = condition.get('cond') if isinstance(condition, dict) else condition
         if not isinstance(text, str):
             return None
-        fact = relation(to_maxima(text.replace('!=', '#')))
+        fact = holpy_condition(text)
         if fact is None:
             return None
         facts.append(fact)
@@ -193,21 +121,21 @@ def integrals(content: Sequence[JSONValue], name: str = '') -> list[DefiniteInte
         read: Optional[tuple[Expr, Symbol, Expr, Expr]] = None
         problem, goal = item.get('problem'), item.get('goal')
         if isinstance(problem, str):
-            read = _integral(problem)
+            read = integral(problem)
             steps = item.get('calc')
             if isinstance(steps, list) and steps and isinstance(steps[-1], dict):
                 last = steps[-1].get('text')
                 if isinstance(last, str) and 'INT' not in last:
-                    recorded = _value(last)
+                    recorded = value(last)
         elif isinstance(goal, str):
-            sides = _sides(goal)
-            if sides is None:
+            sides_ = sides(goal)
+            if sides_ is None:
                 continue
-            for integral_side, other in (sides, sides[::-1]):
-                read = _integral(integral_side)
+            for integral_side, other in (sides_, sides_[::-1]):
+                read = integral(integral_side)
                 if read is not None:
-                    if _integral(other) is None:
-                        recorded = _value(other)
+                    if integral(other) is None:
+                        recorded = value(other)
                     break
         if read is None:
             continue

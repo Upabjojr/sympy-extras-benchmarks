@@ -1,11 +1,14 @@
 """The SMT-LIB parser on problems written here (no network)."""
 from __future__ import annotations
 
-from sympy import Symbol, Rational, And, Or, Not, Implies, Eq, Ne, Le, Xor, Piecewise, true, false
-from sympy.logic.boolalg import ITE
+from typing import Optional
+
+from sympy import (Symbol, Rational, Integer, And, Or, Not, Implies, Eq, Ne, Le, Lt,
+                   Xor, Piecewise, true, false)
+from sympy.logic.boolalg import ITE, Boolean
 from sympy.testing.pytest import raises
 
-from sympy_extras_benchmarks.datasets.smtlib import tokenize, parse, translate, SMTLibError
+from sympy_extras_benchmarks.parsers.smtlib import tokenize, parse, translate, SMTLibError
 
 x, y, z = Symbol('x'), Symbol('y'), Symbol('z')
 
@@ -97,3 +100,82 @@ def test_rejected() -> None:
     assert translate(_problem('(assert (< x 0)) (push 1)')) is None
     assert translate('(assert (< x') is None
     assert translate(_problem('(assert (exists ((z Real)) (< z x)))')) is None
+
+
+def _formula(body: str, sort: str = 'Real', variables: str = 'x y') -> Optional[Boolean]:
+    head = ''.join('(declare-fun %s () %s)' % (v, sort) for v in variables.split())
+    p = translate('(set-logic QF_NRA)%s%s(check-sat)' % (head, body), 'test')
+    return None if p is None else p.formula
+
+
+# ---------------------------------------------------------------------------
+# annotations and powers: syntax the benchmarks really use
+
+def test_annotations_are_transparent() -> None:
+    # ``(! t :named a)`` annotates the term, it does not change it
+    assert _formula('(assert (! (> x 0) :named a1))') == (Symbol('x') > 0)
+    assert _formula('(assert (> (! x :named t1) 0))') == (Symbol('x') > 0)
+
+
+def test_power_with_a_literal_exponent() -> None:
+    x = Symbol('x')
+    assert _formula('(assert (> (^ x 3) 8))') == (x**3 > 8)
+    assert _formula('(assert (> (^ x 0) 0))') == (Integer(1) > 0)
+    # a non-literal exponent cannot be translated: the file is refused
+    assert _formula('(assert (> (^ x x) 1))') is None
+
+
+# ---------------------------------------------------------------------------
+# let, ite, chained relations
+
+def test_let_binds_terms_and_formulas_and_can_shadow() -> None:
+    x = Symbol('x')
+    assert _formula('(assert (let ((v (* x x))) (< v 4)))') == (x**2 < 4)
+    assert _formula('(assert (let ((p (> x 0))) (and p p)))') == (x > 0)
+    # the binding holds inside the ``let`` only: outside, the variable is back
+    assert _formula('(assert (and (let ((x 1)) (> x 0)) (> x 5)))') == (x > 5)
+
+
+def test_nested_let_uses_the_innermost_binding() -> None:
+    assert _formula('(assert (let ((v 1)) (let ((v 2)) (> v 1))))') is not None
+    assert _formula('(assert (let ((v 1)) (let ((v 2)) (> v 1))))') == true
+
+
+def test_ite_on_terms_and_on_formulas() -> None:
+    assert _formula('(assert (> (ite (> x 0) x 1) 0))') is not None
+    assert _formula('(assert (ite (> x 0) (< x 1) (> x 2)))') is not None
+
+
+def test_chained_relations_and_distinct() -> None:
+    x, y = Symbol('x'), Symbol('y')
+    assert _formula('(assert (< 0 x y))') == And(Lt(0, x), Lt(x, y))
+    assert _formula('(assert (distinct x y 0))') == And(Ne(x, y), Ne(x, 0), Ne(y, 0))
+
+
+def test_implication_is_right_associative() -> None:
+    x, y = Symbol('x'), Symbol('y')
+    f = _formula('(assert (=> (> x 0) (> y 0) (> x y)))')
+    assert f == Implies(x > 0, Implies(y > 0, x > y))
+
+
+# ---------------------------------------------------------------------------
+# what the reader refuses
+
+def test_a_file_beyond_qf_nra_is_refused() -> None:
+    assert translate('(declare-fun p () Bool)(assert p)(check-sat)', 'b') is None
+    assert translate('(declare-sort S 0)(check-sat)', 's') is None
+    assert translate('(declare-fun x () Real)(push 1)(check-sat)', 'p') is None
+    assert translate('(declare-fun x () Real)(check-sat)', 'empty') is None   # no assertion
+
+
+def test_a_formula_too_deeply_nested_is_refused_not_crashed() -> None:
+    text = ('(declare-fun x () Real)(assert %s(> x 0)%s)(check-sat)'
+             % ('(not ' * 3000, ')' * 3000))
+    assert translate(text, 'deep') is None
+
+
+def test_the_status_is_read_from_set_info() -> None:
+    p = translate('(set-info :status unsat)(declare-fun x () Real)(assert (> x 0))(check-sat)', 's')
+    assert p is not None and p.status == 'unsat'
+    q = translate('(declare-fun x () Real)(assert (> x 0))(check-sat)', 's')
+    assert q is not None and q.status == 'unknown'

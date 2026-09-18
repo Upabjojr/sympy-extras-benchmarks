@@ -31,7 +31,8 @@ from sympy_extras._timeout import attempt
 from sympy_extras._typing import as_expr
 from sympy_extras.solvers import solve_ode
 
-from sympy_extras_benchmarks.datasets.maxima_ode import load, x, y
+from sympy_extras_benchmarks.datasets.maxima_ode import load
+from sympy_extras_benchmarks.parsers.maxima import x, y
 
 __all__ = ['Equation', 'main', 'numeric_check', 'verify', 'x', 'y']
 

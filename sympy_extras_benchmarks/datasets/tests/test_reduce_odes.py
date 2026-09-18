@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from sympy import Function, Symbol
 
-from sympy_extras_benchmarks.datasets.reduce_odes import ReduceODE, equations, to_maxima
+from sympy_extras_benchmarks.datasets.reduce_odes import ReduceODE, equations
 
 
 def _one(text: str) -> ReduceODE:
@@ -71,11 +71,3 @@ def test_several_calls_are_numbered_in_order() -> None:
     text = "odesolve(df(y,x) - y, y, x);\nodesolve(df(y,x) - 2y, y, x);"
     first, second = equations(text, 'file')
     assert (first.name, second.name) == ('file:1', 'file:2')
-
-
-def test_to_maxima_leaves_ordinary_products_alone() -> None:
-    assert to_maxima('a*x + b*y') == 'a*x + b*y'
-
-
-def test_to_maxima_rewrites_the_power_operator() -> None:
-    assert to_maxima('x**2 + y**3') == 'x^2 + y^3'

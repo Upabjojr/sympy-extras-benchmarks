@@ -6,8 +6,9 @@ import pathlib
 
 from sympy import Symbol
 
-from sympy_extras_benchmarks.datasets import bath_cad, qepcad_tests, tarski_tests
-from sympy_extras_benchmarks.datasets.qepcad_syntax import Example, blocks
+from sympy_extras_benchmarks.datasets import qepcad_tests, tarski_tests
+from sympy_extras_benchmarks.datasets.cad_collections import Example
+from sympy_extras_benchmarks.parsers.qepcad import blocks
 
 x, y = Symbol('x'), Symbol('y')
 
@@ -64,15 +65,6 @@ def test_bracket() -> None:
 def test_brown_source() -> None:
     assert tarski_tests.brown_source(pathlib.Path('/d/a-b-chunk-0001.smt2-3.smt2')) == 'a-b-chunk-0001.smt2'
     assert tarski_tests.brown_source(pathlib.Path('a-b-chunk-0001.smt2-3-12.smt2')) == 'a-b-chunk-0001.smt2'
-
-
-def test_maple() -> None:
-    symbols: dict[str, Symbol] = {}
-    assert bath_cad._maple('x^2*y-3/2*x', symbols) == x**2*y - 3*x/2
-    assert set(symbols) == {'x', 'y'}
-    # a name SymPy defines (E, I, S, N, Q) is read as a variable
-    e = bath_cad._maple('E*I+Q', {})
-    assert {str(s) for s in e.free_symbols} == {'E', 'I', 'Q'}
 
 
 def test_example() -> None:

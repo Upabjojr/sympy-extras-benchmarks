@@ -70,8 +70,9 @@ from typing import Optional
 from sympy import Symbol, oo, zoo
 from sympy.core.expr import Expr
 
-from sympy_extras_benchmarks.datasets.maxima_ode import (
-    TESTS_SUBDIRECTORY, MaximaSyntaxError, fetch as fetch_maxima, parse_expression)
+from sympy_extras_benchmarks.datasets.maxima_ode import TESTS_SUBDIRECTORY, fetch as fetch_maxima
+from sympy_extras_benchmarks.parsers.maxima import (
+    MaximaSyntaxError, group, parse_expression, split_arguments, strip_comments)
 
 __all__ = ['MaximaLimit', 'FILES', 'fetch', 'load', 'limits']
 
@@ -151,55 +152,6 @@ def _assumed(text: str, position: int) -> bool:
     return active > 0
 
 
-def _group(text: str, start: int) -> Optional[tuple[str, int]]:
-    """The bracketed group beginning at ``start``, and the index after it."""
-    depth, index = 0, start
-    while index < len(text):
-        if text[index] in '([':
-            depth += 1
-        elif text[index] in ')]':
-            depth -= 1
-            if depth == 0:
-                return text[start + 1:index], index + 1
-        index += 1
-    return None
-
-
-def _split_commas(text: str) -> list[str]:
-    parts, depth, last = [], 0, 0
-    for index, character in enumerate(text):
-        if character in '([':
-            depth += 1
-        elif character in ')]':
-            depth -= 1
-        elif character == ',' and depth == 0:
-            parts.append(text[last:index])
-            last = index + 1
-    parts.append(text[last:])
-    return [p.strip() for p in parts if p.strip()]
-
-
-def strip_comments(text: str) -> str:
-    """``text`` with Maxima's ``/* ... */`` comments blanked, positions kept."""
-    out = list(text)
-    depth, index = 0, 0
-    while index < len(text) - 1:
-        if text[index:index + 2] == '/*':
-            depth += 1
-            out[index] = out[index + 1] = ' '
-            index += 2
-            continue
-        if text[index:index + 2] == '*/' and depth:
-            depth -= 1
-            out[index] = out[index + 1] = ' '
-            index += 2
-            continue
-        if depth and out[index] != '\n':
-            out[index] = ' '
-        index += 1
-    return "".join(out)
-
-
 def _answer_after(text: str, position: int) -> str:
     """The statement following the call: what Maxima records as the value.
 
@@ -256,10 +208,10 @@ def limits(text: str, name: str = '') -> list[MaximaLimit]:
         # forgotten, or cleared by kill(all), is no longer in force
         if _assumed(body, match.start()):
             continue
-        group = _group(body, match.end() - 1)
-        if group is None:
+        closed = group(body, match.end() - 1)
+        if closed is None:
             continue
-        arguments = _split_commas(group[0])
+        arguments = split_arguments(closed[0])
         if len(arguments) < 3:
             continue                        # limit(expr) alone: no variable
         try:
@@ -281,7 +233,7 @@ def limits(text: str, name: str = '') -> list[MaximaLimit]:
                 direction = '-'
             else:
                 continue                    # an option this module does not read
-        recorded = _value(_answer_after(body, group[1]))
+        recorded = _value(_answer_after(body, closed[1]))
         found.append(MaximaLimit('%s:%d' % (name, index), expression, variable,
                                  point, direction, recorded))
     return found

@@ -30,7 +30,8 @@ from sympy.logic.boolalg import Boolean
 from sympy_extras.assumptions import satisfiable, simplify, refine
 from sympy_extras._timeout import attempt
 
-from sympy_extras_benchmarks.datasets.smtlib import Problem, load, translate
+from sympy_extras_benchmarks.datasets.smtlib import load
+from sympy_extras_benchmarks.parsers.smtlib import Problem, translate
 
 
 def evaluate(formula: Boolean, point: dict[Basic, Basic]) -> Optional[bool]:

@@ -4,7 +4,7 @@ Every collection which may be redistributed is kept here in the language
 it is written in — Maxima, REDUCE, SMT-LIB 2, Lean 4, Rocq, QEPCAD and
 Tarski input, FriCAS input, holpy JSON — exactly as its upstream holds
 it, with the licence of that upstream beside it. Nothing here is
-translated: the parsers of `sympy_extras_benchmarks.datasets` read these
+translated: the parsers of `sympy_extras_benchmarks.parsers` read these
 files and produce SymPy objects when a dataset is loaded, so a checkout
 of this repository runs every benchmark of the table below without
 touching the network.

@@ -15,32 +15,46 @@ specific to this repository follow.
 sympy_extras_benchmarks/
     cache.py                 where the collections are found: data/ first, then the cache
     huggingface.py           the Hub mirrors of the large collections, and the upstream-or-Hub order
-    datasets/
-        maxima_ode.py        parser of Maxima's contrib_ode test files: Kamke and Murphy collections
-        smtlib.py            SMT-LIB 2 parser (QF_NRA): the Meti-Tarski family
-        solver_regressions.py  SMT-LIB 2 over the integers and with quantifiers: the cvc5 and Z3 regression suites
+    parsers/                 the languages the collections are written in, read into SymPy; text in,
+                             SymPy out: no file, no network, no knowledge of any collection
+        maxima.py            Maxima expressions, relations and source text (statements, comments, groups)
+        reduce.py            REDUCE expressions, rewritten into Maxima's syntax
+        fricas.py            FriCAS input, rewritten into Maxima's syntax
+        holpy.py             holpy expressions and INT integrals, read through Maxima's
+        maple.py             Maple polynomials
+        smtlib.py            SMT-LIB 2: s-expressions, QF_NRA (translate), and the arithmetic logics
+                             with integers and quantifiers (translate_arithmetic)
+        qepcad.py            the formula language of QEPCAD B and Tarski, and QEPCAD's input dialogue
+        prover.py            the arithmetic grammar Lean and Rocq statements share, and its refusals
+                             (chained relations, abs, and the guards for total arithmetic, which
+                             read an *unevaluated* parse because SymPy settles arithmetic as it reads)
+        lean.py              Lean 4 example statements
+        rocq.py              Rocq (Coq) Lemma/Goal statements
+        tptp.py              TPTP problems in TFF
+        tests/               parser tests on inline samples (no network, fast)
+    datasets/                the collections: where their files are, their structure, what they assert
+        maxima_ode.py        Maxima's contrib_ode test files: Kamke and Murphy collections
+        smtlib.py            the Meti-Tarski family of SMT-LIB QF_NRA
+        solver_regressions.py  the arithmetic problems of the cvc5 and Z3 regression suites (cvc5's EXPECT header)
         smtlib_release.py    every problem of SMT-LIB QF_NRA and NRA: the 2025 release, from Zenodo
-        qepcad_syntax.py     the formula language of QEPCAD B and Tarski, and QEPCAD's input dialogue
+        cad_collections.py   the record of a problem of the CAD collections
         bath_cad.py          the Bath CAD example bank (QEPCAD inputs, Maple lists, cell counts)
         qepcad_tests.py      the regression tests and worked examples of QEPCAD B
         tarski_tests.py      the tests of Tarski: GeoGebra, ISSAC, interpreter, Brown--Vale-Enriquez
-        prover_syntax.py     the arithmetic grammar the proof-assistant parsers share, and its refusals
-                             (chained relations, abs, and the guards for total arithmetic, which
-                             read an *unevaluated* parse because SymPy settles arithmetic as it reads)
-        lean_tactics.py      the linarith/positivity tests of Lean's mathlib4
-        coq_micromega.py     the lia/nia/psatz tests of the Rocq/Coq standard library
-        tptp_arithmetic.py   the ARI domain of the TPTP problem library (TFF parser)
+        lean_tactics.py      the linarith/positivity tests of Lean's mathlib4 (negative tests, sorry, axioms)
+        coq_micromega.py     the lia/nia/psatz tests of the Rocq/Coq standard library (Qed, not Abort)
+        tptp_arithmetic.py   the ARI domain of the TPTP problem library
         reduce_odes.py       the Postel-Zimmermann ODEs, from REDUCE's ODESolve tests
         pde_symmetries.py    12 classical PDEs with the dimension of their symmetry algebra
         polynomial_systems.py  Katsura and cyclic systems with their invariants
         polynomial_solving.py  systems of polynomial equations: Maxima's algsys regression file
         maxima_limits.py     limits: Maxima's four regression files, Gruntz and Wester included
-        integrals.py         the record of a definite integral, and the helpers the integration datasets share
+        integrals.py         the record of a definite integral
         maxima_integrals.py  definite integrals and Laplace transforms: rtestint, rtest_integrate, Wester, laplace, specint
         reduce_defint.py     the definite integrals of REDUCE's DEFINT tests (the Meijer G method)
         fricas_integrals.py  FriCAS's mapleok collection, complex paths included
         holpy_integrals.py   holpy's examples: MIT Integration Bee, Schaum's, UC Davis, proved identities
-        tests/               parser tests on inline samples (no network, fast)
+        tests/               dataset reader tests on inline samples (no network, fast)
     runner.py                parallel, resumable runs in worker processes with time and memory limits
     oracles/                 independent oracles a driver can check against
         wolfram.py           Mathematica behind a command given with --wolfram
@@ -124,13 +138,22 @@ results/                     runs written by --output, ignored by git
   written for the test (in the syntax of the format, not copied from the
   files). A dataset which only exists as code is translated into SymPy
   expressions in a module of `datasets/`.
+- **Parsing and datasets are separate.** A parser, in `parsers/`, reads the
+  language of another system and returns SymPy objects: it takes text,
+  never a path, reads no file, touches no network, imports nothing from
+  `datasets/`, `cache` or `huggingface`, and knows nothing of any
+  collection. A dataset, in `datasets/`, finds the files, reads their
+  structure (the entries of a test file, the recorded answers, which
+  statements the suite proves) and hands the source text to a parser. A
+  language shared by several collections has one parser, not a copy per
+  dataset.
 - **Read only what the suite actually asserts.** Both proof assistants and
   Maxima record entries that are *not* claims: mathlib marks a goal its
   tactic should fail on with `#guard_msgs`, an `/-- error -/` docstring,
   `fail_if_success`, a deliberately false local `axiom` or `test_sorry`;
   Rocq closes one with `Abort` or `Admitted`; Maxima comments the call out
   entirely. Reading any of them as an oracle produces a false bug report,
-  so each parser refuses them and says so in its refusal reason.
+  so each dataset refuses them and says so in its refusal reason.
 
 ## Drivers
 
@@ -161,7 +184,7 @@ Strict type stability as in sympy-extras: every function annotated, no
 `sympy_extras._typing` (`as_expr`, `as_boolean`). Before committing:
 
 ```
-python -m pytest              # parser tests and doctests, no network
+python -m pytest              # parser and dataset tests, doctests; no network
 python -m mypy                # Success: no issues found
 python -m pyflakes sympy_extras_benchmarks conftest.py scripts
 ```

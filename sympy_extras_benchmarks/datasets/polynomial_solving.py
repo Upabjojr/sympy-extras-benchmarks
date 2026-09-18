@@ -65,10 +65,11 @@ from typing import Optional
 from sympy import Symbol
 from sympy.core.expr import Expr
 
-from sympy_extras_benchmarks.datasets.maxima_ode import (
-    TESTS_SUBDIRECTORY, MaximaSyntaxError, fetch as fetch_maxima, parse_expression)
+from sympy_extras_benchmarks.datasets.maxima_ode import TESTS_SUBDIRECTORY, fetch as fetch_maxima
+from sympy_extras_benchmarks.parsers.maxima import (
+    MaximaSyntaxError, group, parse_expression, split_arguments, strip_comments)
 
-__all__ = ['PolynomialSystem', 'FILE', 'fetch', 'load', 'strip_comments', 'systems']
+__all__ = ['PolynomialSystem', 'FILE', 'fetch', 'load', 'systems']
 
 #: the Maxima regression file read
 FILE = 'rtest_algsys'
@@ -119,39 +120,6 @@ class PolynomialSystem:
             'parametric' if self.parametric else self.recorded)
 
 
-def _balanced_group(text: str, start: int) -> Optional[tuple[str, int]]:
-    """The bracketed group beginning at ``start``, and the index after it."""
-    opening = text[start]
-    closing = {'(': ')', '[': ']'}.get(opening)
-    if closing is None:
-        return None
-    depth, index = 0, start
-    while index < len(text):
-        if text[index] == opening:
-            depth += 1
-        elif text[index] == closing:
-            depth -= 1
-            if depth == 0:
-                return text[start + 1:index], index + 1
-        index += 1
-    return None
-
-
-def _split_commas(text: str) -> list[str]:
-    """``text`` split at the commas outside brackets."""
-    parts, depth, last = [], 0, 0
-    for index, character in enumerate(text):
-        if character in '([':
-            depth += 1
-        elif character in ')]':
-            depth -= 1
-        elif character == ',' and depth == 0:
-            parts.append(text[last:index])
-            last = index + 1
-    parts.append(text[last:])
-    return [p.strip() for p in parts if p.strip()]
-
-
 def _recorded(text: str, start: int) -> tuple[Optional[int], bool]:
     """``(number of solutions, parametric)`` from the answer that follows
     the call, which ends at the next ``;`` outside brackets."""
@@ -164,41 +132,11 @@ def _recorded(text: str, start: int) -> tuple[Optional[int], bool]:
         start += 1
     if start >= len(text) or text[start] != '[':
         return None, False
-    group = _balanced_group(text, start)
-    if group is None:
+    closed = group(text, start)
+    if closed is None:
         return None, False
-    body = group[0]
-    return len(_split_commas(body)), '%r' in body
-
-
-def strip_comments(text: str) -> str:
-    """``text`` with Maxima's ``/* ... */`` comments blanked out.
-
-    They are blanked rather than removed so that positions still line up.
-    Maxima nests them, and the file uses that to disable whole entries: an
-    ``algsys`` call inside a comment is one the suite does not run — often
-    because the recorded answer is known to be wrong — so reading it would
-    put a question to the solver that Maxima itself declines to ask.
-    """
-    out = list(text)
-    depth, index = 0, 0
-    while index < len(text) - 1:
-        if text[index:index + 2] == '/*':
-            depth += 1
-            out[index] = out[index + 1] = ' '
-            index += 2
-            continue
-        if text[index:index + 2] == '*/' and depth:
-            depth -= 1
-            out[index] = out[index + 1] = ' '
-            index += 2
-            continue
-        if depth and out[index] != '\n':
-            out[index] = ' '
-        index += 1
-    if depth and index < len(text) and out[index] != '\n':
-        out[index] = ' '
-    return "".join(out)
+    body = closed[0]
+    return len(split_arguments(body)), '%r' in body
 
 
 def _assignments(text: str, upto: int) -> dict[str, str]:
@@ -240,18 +178,18 @@ def systems(text: str, name: str = '') -> list[PolynomialSystem]:
     text = strip_comments(text)
     found: list[PolynomialSystem] = []
     for index, match in enumerate(_CALL.finditer(text), start=1):
-        arguments = _balanced_group(text, match.end() - 1)
+        arguments = group(text, match.end() - 1)
         if arguments is None:
             continue
-        parts = _split_commas(arguments[0])
+        parts = split_arguments(arguments[0])
         if len(parts) != 2 or not parts[0].startswith('[') or not parts[1].startswith('['):
             continue
         bindings = _assignments(text, match.start())
         try:
             equations = [parse_expression(_resolve(e, bindings), _NO_FUNCTION, _NO_FUNCTION)
-                         for e in _split_commas(parts[0][1:-1])]
+                         for e in split_arguments(parts[0][1:-1])]
             unknowns = [parse_expression(v, _NO_FUNCTION, _NO_FUNCTION)
-                        for v in _split_commas(parts[1][1:-1])]
+                        for v in split_arguments(parts[1][1:-1])]
         except (MaximaSyntaxError, RecursionError, ValueError):
             continue
         if not equations or not all(isinstance(v, Symbol) for v in unknowns):

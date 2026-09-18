@@ -31,7 +31,8 @@ import subprocess
 from typing import Optional
 
 from sympy_extras_benchmarks.cache import bundled, cache_directory
-from sympy_extras_benchmarks.datasets.qepcad_syntax import Example, blocks
+from sympy_extras_benchmarks.datasets.cad_collections import Example
+from sympy_extras_benchmarks.parsers.qepcad import blocks
 
 __all__ = ['REPOSITORY', 'ENVIRONMENT_VARIABLE', 'fetch', 'examples']
 

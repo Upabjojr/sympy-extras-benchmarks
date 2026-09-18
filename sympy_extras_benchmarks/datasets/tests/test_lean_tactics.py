@@ -6,7 +6,8 @@ from sympy import Abs, And, Eq, Implies, Ne, Not, S, Symbol, true
 
 from sympy_extras.assumptions import Exists, ForAll
 
-from sympy_extras_benchmarks.datasets.lean_tactics import LeanGoal, goals
+from sympy_extras_benchmarks.datasets.lean_tactics import goals
+from sympy_extras_benchmarks.parsers.lean import LeanGoal
 
 
 def _one(text: str) -> LeanGoal:

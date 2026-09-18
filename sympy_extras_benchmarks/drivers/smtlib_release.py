@@ -47,7 +47,8 @@ from sympy_extras.assumptions import Exists, satisfiable, simplify, refine, reso
 from sympy_extras._timeout import TimeLimitExceeded, time_limit
 from sympy_extras._typing import as_boolean
 
-from sympy_extras_benchmarks.datasets import smtlib, solver_regressions, tarski_tests
+from sympy_extras_benchmarks.datasets import solver_regressions, tarski_tests
+from sympy_extras_benchmarks.parsers.smtlib import ArithProblem, Problem, translate
 from sympy_extras_benchmarks.datasets.smtlib_release import family, load
 from sympy_extras_benchmarks.runner import Result, Task, run
 
@@ -156,9 +157,9 @@ def _float(task: Task, key: str) -> float:
 
 def _qf_nra(text: str, name: str, task: Task, result: Result) -> None:
     step(name, 'parse')
-    parsed = call(lambda: smtlib.translate(text, name), PARSE_TIMEOUT)
+    parsed = call(lambda: translate(text, name), PARSE_TIMEOUT)
     problem = parsed.value
-    if parsed.kind != 'value' or not isinstance(problem, smtlib.Problem):
+    if parsed.kind != 'value' or not isinstance(problem, Problem):
         result['verdict'] = 'untranslated' if parsed.kind == 'value' else 'parse ' + parsed.label()
         return
     formula, variables, status = problem.formula, list(problem.variables), problem.status
@@ -208,7 +209,7 @@ def _nra(text: str, name: str, task: Task, result: Result) -> None:
     step(name, 'parse')
     parsed = call(lambda: solver_regressions.translate(text, name), PARSE_TIMEOUT)
     problem = parsed.value
-    if parsed.kind != 'value' or not isinstance(problem, solver_regressions.ArithProblem):
+    if parsed.kind != 'value' or not isinstance(problem, ArithProblem):
         result['verdict'] = 'untranslated' if parsed.kind == 'value' else 'parse ' + parsed.label()
         return
     status = problem.status

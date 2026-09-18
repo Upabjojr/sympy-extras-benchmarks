@@ -83,10 +83,12 @@ from sympy.logic.boolalg import Boolean
 from sympy_extras._typing import as_boolean, as_expr
 
 from sympy_extras_benchmarks.datasets import fricas_integrals
-from sympy_extras_benchmarks.datasets.integrals import group, parse, relation, split_arguments
 from sympy_extras_benchmarks.datasets.maxima_integrals import (
-    _BINDING, _CALL, _LOOP, _PRESERVING, _PRINCIPAL, _Context, _application, _enclosing, _items, _peeled,
-    licence_files as maxima_licence_files, statements)
+    _BINDING, _CALL, _LOOP, _PRESERVING, _PRINCIPAL, _Context, _enclosing, _items, _peeled,
+    licence_files as maxima_licence_files)
+from sympy_extras_benchmarks.parsers import fricas
+from sympy_extras_benchmarks.parsers.maxima import (
+    application as _application, group, parse, relation, split_arguments, statements)
 from sympy_extras_benchmarks.datasets.maxima_ode import TESTS_SUBDIRECTORY, fetch as fetch_maxima
 
 __all__ = ['IndefiniteIntegral', 'MAXIMA_FILES', 'FRICAS_FILES', 'COLLECTIONS', 'LICENCES',
@@ -284,38 +286,11 @@ def maxima_indefinite(text: str, collection: str = '', values_follow: bool = Tru
     return found
 
 
-def _joined(text: str) -> str:
-    """A FriCAS input without its ``--`` comments and system commands, the
-    continuation lines (ending in ``_``) joined."""
-    lines: list[str] = []
-    for line in text.splitlines():
-        stripped = line.lstrip()
-        if stripped.startswith(('--', ')')):
-            lines.append('')
-            continue
-        lines.append(re.sub(r"\s--.*$", '', line))
-    return re.sub(r"_\s*\n", '', "\n".join(lines))
-
-
-def _quoted(argument: str) -> Optional[str]:
-    """The text of a FriCAS string literal, or of adjacent literals over
-    several lines joined; ``None`` for anything else.
-
-    >>> from sympy_extras_benchmarks.datasets.indefinite_integrals import _quoted
-    >>> _quoted('"(x+1)*"   "exp(x)"'), _quoted('f: String')
-    ('(x+1)*exp(x)', None)
-    """
-    body = argument.strip()
-    if '_"' in body or not re.fullmatch(r'(\s*"[^"]*"\s*)+', body):
-        return None
-    return ''.join(re.findall(r'"([^"]*)"', body))
-
-
 def fricas_indefinite(text: str, collection: str = '') -> list[IndefiniteIntegral]:
     """Every indefinite integral asserted by a FriCAS test input:
     ``testIntegrate("f", "x", "issue")`` and ``testEquals("integrate(f, x)",
     "F")``, each integral once."""
-    body = _joined(text)
+    body = fricas.joined(text)
     found: list[IndefiniteIntegral] = []
     seen: set[tuple[Expr, Symbol]] = set()
     number = 0
@@ -330,14 +305,14 @@ def fricas_indefinite(text: str, collection: str = '') -> list[IndefiniteIntegra
         if kind == 'integrate':
             if len(arguments) != 3:
                 continue
-            strings = [_quoted(a) for a in arguments[:2]]
+            strings = [fricas.quoted(a) for a in arguments[:2]]
             if any(s is None for s in strings):
                 continue
             integrand_text, variable_text = str(strings[0]), str(strings[1])
         else:
             if len(arguments) != 2:
                 continue
-            call, answer = _quoted(arguments[0]), _quoted(arguments[1])
+            call, answer = fricas.quoted(arguments[0]), fricas.quoted(arguments[1])
             if call is None or answer is None:
                 continue
             inner = re.fullmatch(r"\s*integrate\s*\((.*)\)\s*", call, re.S)
@@ -347,8 +322,8 @@ def fricas_indefinite(text: str, collection: str = '') -> list[IndefiniteIntegra
             if len(parts) != 2:
                 continue                                    # a definite integral
             integrand_text, variable_text = parts
-            recorded = parse(fricas_integrals.to_maxima(answer))
-        integrand = parse(fricas_integrals.to_maxima(integrand_text))
+            recorded = parse(fricas.to_maxima(answer))
+        integrand = parse(fricas.to_maxima(integrand_text))
         variable = parse(variable_text)
         if integrand is None or not isinstance(variable, Symbol) or not integrand.has(variable):
             continue

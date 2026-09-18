@@ -16,15 +16,17 @@ checks a result against numerical quadrature
 (:mod:`~sympy_extras_benchmarks.oracles.quadrature`) and reports a recorded
 value that quadrature contradicts as a finding about the source.
 
-The helpers read the notation the sources share: Maxima's relations
-(``a > 0``, ``a # 0``, ``notequal(a, 0)``) for the facts, and the
-splitting of an argument list at its top-level commas.
+Every source is read through the Maxima parser of
+:mod:`~sympy_extras_benchmarks.parsers.maxima` (REDUCE, FriCAS and holpy
+expressions rewritten into Maxima's syntax first), whose
+:func:`~sympy_extras_benchmarks.parsers.maxima.relation` reads the facts.
 
 Examples
 ========
 
 >>> from sympy import Symbol, exp, oo
->>> from sympy_extras_benchmarks.datasets.integrals import DefiniteIntegral, relation
+>>> from sympy_extras_benchmarks.datasets.integrals import DefiniteIntegral
+>>> from sympy_extras_benchmarks.parsers.maxima import relation
 >>> x = Symbol('x')
 >>> entry = DefiniteIntegral('demo:1', exp(-x), x, 0, oo, recorded=1)
 >>> entry
@@ -38,34 +40,20 @@ Ne(a, 0)
 """
 from __future__ import annotations
 
-import re
-from typing import Callable, Optional, Sequence
+from typing import Optional, Sequence
 
-from sympy import Derivative, Eq, Ge, Gt, Integral, Le, Lt, Ne, Product, Sum, Symbol, nan, sympify
+from sympy import Integral, Symbol, sympify
 from sympy.core.expr import Expr
-from sympy.core.function import AppliedUndef
 from sympy.logic.boolalg import Boolean
 
-from sympy_extras._typing import as_boolean, as_expr
+from sympy_extras._typing import as_expr
 
-from sympy_extras_benchmarks.datasets.maxima_ode import MaximaSyntaxError, parse_expression
+__all__ = ['DefiniteIntegral', 'PROPERTIES']
 
-__all__ = ['DefiniteIntegral', 'NO_FUNCTION', 'PROPERTIES', 'readable', 'relation',
-           'parse', 'split_arguments', 'group']
-
-#: a name that cannot occur in the files, so the Maxima parser — written
-#: for differential equations — leaves every name a plain symbol
-NO_FUNCTION = '__not_a_dependent_variable__'
 
 #: the properties a parameter may be declared to have, each the name of the
 #: SymPy assumption it becomes
 PROPERTIES: frozenset[str] = frozenset({'integer', 'noninteger', 'even', 'odd', 'real'})
-
-#: the relational operators, the two-character ones first
-_RELATIONS: tuple[tuple[str, Callable[[Expr, Expr], Boolean]], ...] = (
-    ('>=', Ge), ('<=', Le), ('#', Ne), ('>', Gt), ('<', Lt), ('=', Eq))
-
-_OPEN, _CLOSE = '([{', ')]}'
 
 
 class DefiniteIntegral:
@@ -126,93 +114,3 @@ class DefiniteIntegral:
             self.name, self.variable, self.lower, self.upper, self.recorded)
 
 
-def readable(expr: object) -> bool:
-    """Whether ``expr`` is a value this package can reason about: an
-    expression without undefined functions, derivatives, integrals, sums,
-    products or ``nan`` — any of which means a name or construct of the
-    source that did not translate."""
-    if not isinstance(expr, Expr):
-        return False
-    if expr.has(nan):
-        return False
-    return not expr.atoms(AppliedUndef, Derivative, Integral, Sum, Product)
-
-
-def parse(text: str) -> Optional[Expr]:
-    """A Maxima expression as a readable SymPy expression, or ``None``."""
-    try:
-        value = parse_expression(text, NO_FUNCTION, NO_FUNCTION)
-    except (MaximaSyntaxError, RecursionError, ValueError, TypeError, ZeroDivisionError):
-        return None
-    return value if readable(value) else None
-
-
-def group(text: str, start: int) -> Optional[tuple[str, int]]:
-    """The inside of the bracketed group opening at ``text[start]``, and the
-    index after its closing bracket; ``None`` when it does not close."""
-    depth, index, quoted = 0, start, False
-    while index < len(text):
-        character = text[index]
-        if character == '"':
-            quoted = not quoted
-        elif not quoted and character in _OPEN:
-            depth += 1
-        elif not quoted and character in _CLOSE:
-            depth -= 1
-            if depth == 0:
-                return text[start + 1:index], index + 1
-        index += 1
-    return None
-
-
-def split_arguments(text: str) -> list[str]:
-    """``text`` split at its top-level commas, each part stripped.
-
-    >>> split_arguments('f(x, y), [a, b], "c, d"')
-    ['f(x, y)', '[a, b]', '"c, d"']
-    """
-    parts: list[str] = []
-    depth, last, quoted = 0, 0, False
-    for index, character in enumerate(text):
-        if character == '"':
-            quoted = not quoted
-        elif quoted:
-            continue
-        elif character in _OPEN:
-            depth += 1
-        elif character in _CLOSE:
-            depth -= 1
-        elif character == ',' and depth == 0:
-            parts.append(text[last:index].strip())
-            last = index + 1
-    parts.append(text[last:].strip())
-    return [p for p in parts if p]
-
-
-def relation(text: str) -> Optional[Boolean]:
-    """A Maxima relation (``a > 0``, ``a # b``, ``notequal(a, 0)``,
-    ``equal(a, b)``) as a SymPy one, or ``None`` when it is not one."""
-    body = text.strip()
-    call = re.fullmatch(r'(not)?equal\s*\((.*)\)', body, re.S)
-    if call is not None:
-        arguments = split_arguments(call.group(2))
-        if len(arguments) != 2:
-            return None
-        lhs, rhs = parse(arguments[0]), parse(arguments[1])
-        if lhs is None or rhs is None:
-            return None
-        return as_boolean(Ne(lhs, rhs) if call.group(1) else Eq(lhs, rhs))
-    depth = 0
-    for index, character in enumerate(body):
-        if character in _OPEN:
-            depth += 1
-        elif character in _CLOSE:
-            depth -= 1
-        elif depth == 0:
-            for symbol, build in _RELATIONS:
-                if body.startswith(symbol, index):
-                    lhs, rhs = parse(body[:index]), parse(body[index + len(symbol):])
-                    if lhs is None or rhs is None:
-                        return None
-                    return as_boolean(build(lhs, rhs))
-    return None

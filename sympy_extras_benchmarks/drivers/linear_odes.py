@@ -35,7 +35,8 @@ from sympy_extras._timeout import attempt
 from sympy_extras.settings import configure
 from sympy_extras.solvers.linear_ode import LinearOperator, dsolve_linear
 
-from sympy_extras_benchmarks.datasets.maxima_ode import ODEEntry, load, x, y
+from sympy_extras_benchmarks.datasets.maxima_ode import ODEEntry, load
+from sympy_extras_benchmarks.parsers.maxima import x, y
 
 
 def run(entry: ODEEntry, timeout: float) -> tuple[str, float, int]:

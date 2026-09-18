@@ -48,7 +48,8 @@ from sympy_extras.assumptions import Exists, resolve, satisfiable
 from sympy_extras._timeout import attempt
 from sympy_extras._typing import as_boolean
 
-from sympy_extras_benchmarks.datasets.solver_regressions import ArithProblem, load, translate
+from sympy_extras_benchmarks.datasets.solver_regressions import load, translate
+from sympy_extras_benchmarks.parsers.smtlib import ArithProblem
 from sympy_extras_benchmarks.oracles.wolfram import Wolfram, WolframError, to_wolfram
 
 
