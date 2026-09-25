@@ -32,3 +32,14 @@ def test_instances() -> None:
         # the result x >= 0 at the point is what Mathematica must answer
         assert question.confirming == (not value.startswith('-') or value == '0')
         assert question.expression.startswith('Resolve[Exists[{sympyy}, ')
+
+
+def test_powers_of_powers_are_bracketed() -> None:
+    # The base of a power was printed without brackets, so sqrt(x**2)
+    # became sympyx^(2)^((1/2)), which Mathematica reads as x^(2^(1/2)):
+    # the audit of maxima/specint:45 reported a correct integral as wrong.
+    from sympy import Integer, Pow, Symbol, sqrt
+    from sympy_extras_benchmarks.oracles.wolfram import to_wolfram
+    x = Symbol('x')
+    assert to_wolfram(sqrt(x**2)) == "((sympyx)^(2))^((1/2))"
+    assert to_wolfram(Pow(Integer(-2), x)) == "(-2)^(sympyx)"

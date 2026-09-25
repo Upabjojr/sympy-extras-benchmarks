@@ -29,13 +29,13 @@ Examples
 >>> from sympy_extras_benchmarks.oracles.wolfram import to_wolfram
 >>> x, y = Symbol('x'), Symbol('y')
 >>> print(to_wolfram((x**2 > 2) & Eq(x*y, 1)))
-(((sympyx*sympyy) == 1) && (sympyx^(2) > 2))
+(((sympyx*sympyy) == 1) && ((sympyx)^(2) > 2))
 >>> from sympy_extras.assumptions import Exists
 >>> print(to_wolfram(Exists(x, x**2 < y)))
-Exists[{sympyx}, (sympyx^(2) < sympyy)]
+Exists[{sympyx}, ((sympyx)^(2) < sympyy)]
 >>> from sympy import CRootOf
 >>> print(to_wolfram(x > CRootOf(x**3 - x - 1, 0)))
-(sympyx > Root[Function[{sympyx}, (-1 + sympyx^(3) + (-1*sympyx))], 1])
+(sympyx > Root[Function[{sympyx}, (-1 + (sympyx)^(3) + (-1*sympyx))], 1])
 """
 from __future__ import annotations
 
@@ -193,7 +193,7 @@ def to_wolfram(node: Basic) -> str:
     if isinstance(node, Mul):
         return "(" + "*".join(to_wolfram(a) for a in node.args) + ")"
     if isinstance(node, Pow):
-        return "%s^(%s)" % (to_wolfram(node.base), to_wolfram(node.exp))
+        return "(%s)^(%s)" % (to_wolfram(node.base), to_wolfram(node.exp))
     if isinstance(node, Abs):
         return "Abs[%s]" % to_wolfram(node.args[0])
     if isinstance(node, Mod):
