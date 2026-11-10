@@ -21,7 +21,8 @@ import sys
 import time
 from typing import Optional
 
-from sympy_extras.solvers import pde_symmetries, check_symmetry
+from sympy_extras.solvers.pde import pde_symmetries
+from sympy_extras.solvers.lie import check_symmetry
 
 from sympy_extras_benchmarks.datasets.pde_symmetries import TABLE, u
 

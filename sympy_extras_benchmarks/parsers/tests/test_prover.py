@@ -7,7 +7,7 @@ from __future__ import annotations
 from sympy import Implies, Lt, Ne, S, Symbol
 from sympy.testing.pytest import raises
 
-from sympy_extras.assumptions import Exists, ForAll
+from sympy_extras.assumptions.quantifiers_sympy import Exists, ForAll
 from sympy_extras_benchmarks.parsers.lean import LeanGoal, example
 from sympy_extras_benchmarks.parsers.prover import (SyntaxRefused, balanced, bars_to_abs,
                                                     proposition, split_top)

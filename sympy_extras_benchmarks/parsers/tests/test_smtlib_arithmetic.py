@@ -8,7 +8,7 @@ from typing import Optional
 from sympy import And, Eq, Mod, Ne, Or, Symbol, S, true
 from sympy.testing.pytest import raises
 
-from sympy_extras.assumptions import Exists, ForAll
+from sympy_extras.assumptions.quantifiers_sympy import Exists, ForAll
 
 from sympy_extras_benchmarks.parsers.smtlib import (
     ARITHMETIC_LOGICS, ArithProblem, SMTLibError, parse, tokenize, translate_arithmetic)

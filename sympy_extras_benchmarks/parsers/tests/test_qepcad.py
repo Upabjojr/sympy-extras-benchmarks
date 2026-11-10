@@ -4,7 +4,7 @@ from __future__ import annotations
 from sympy import Symbol, Rational, Eq, Ne, Le, And, Or, Not, Implies, Equivalent, true, false
 from sympy.testing.pytest import raises
 
-from sympy_extras.assumptions import Exists, ForAll
+from sympy_extras.assumptions.quantifiers_sympy import Exists, ForAll
 from sympy_extras_benchmarks.parsers.qepcad import (
     QEPCADInput, QEPCADSyntaxError, UnsupportedSyntax, parse_formula, parse_inputs, tokenize)
 

@@ -79,7 +79,7 @@ from sympy.core.singleton import S
 from sympy.logic.boolalg import Boolean, ITE
 from sympy.sets.sets import Set
 
-from sympy_extras.assumptions import Exists, ForAll
+from sympy_extras.assumptions.quantifiers_sympy import Exists, ForAll
 from sympy_extras._typing import as_boolean, as_expr
 
 __all__ = ['SExpr', 'SMTLibError', 'tokenize', 'parse', 'Problem', 'translate',

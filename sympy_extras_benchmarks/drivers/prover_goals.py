@@ -30,7 +30,7 @@ from sympy import S, Symbol, count_ops, false, true
 from sympy.logic.boolalg import Boolean
 from sympy.sets.sets import Set
 
-from sympy_extras.assumptions import resolve
+from sympy_extras.assumptions.resolve import resolve
 from sympy_extras._timeout import attempt
 from sympy_extras._typing import as_boolean
 

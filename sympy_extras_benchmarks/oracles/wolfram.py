@@ -30,7 +30,7 @@ Examples
 >>> x, y = Symbol('x'), Symbol('y')
 >>> print(to_wolfram((x**2 > 2) & Eq(x*y, 1)))
 (((sympyx*sympyy) == 1) && ((sympyx)^(2) > 2))
->>> from sympy_extras.assumptions import Exists
+>>> from sympy_extras.assumptions.quantifiers_sympy import Exists
 >>> print(to_wolfram(Exists(x, x**2 < y)))
 Exists[{sympyx}, ((sympyx)^(2) < sympyy)]
 >>> from sympy import CRootOf
@@ -50,7 +50,7 @@ from sympy.logic.boolalg import Boolean
 from sympy.sets.sets import Set
 from sympy.core.singleton import S
 
-from sympy_extras.assumptions import ForAll, Quantifier
+from sympy_extras.assumptions.quantifiers_sympy import ForAll, Quantifier
 
 __all__ = ['WolframError', 'wolfram_name', 'to_wolfram', 'number', 'Wolfram']
 

@@ -44,7 +44,9 @@ from sympy import Basic, S, count_ops, false, true
 from sympy.logic.boolalg import Boolean
 from sympy.sets.sets import Set
 
-from sympy_extras.assumptions import Exists, resolve, satisfiable
+from sympy_extras.assumptions.quantifiers_sympy import Exists
+from sympy_extras.assumptions.resolve import resolve
+from sympy_extras.assumptions.sat import satisfiable
 from sympy_extras._timeout import attempt
 from sympy_extras._typing import as_boolean
 

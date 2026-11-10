@@ -42,7 +42,8 @@ from sympy.core.basic import Basic
 from sympy.core.expr import Expr
 from sympy.logic.boolalg import Boolean
 
-from sympy_extras.assumptions import resolve, satisfiable
+from sympy_extras.assumptions.resolve import resolve
+from sympy_extras.assumptions.sat import satisfiable
 from sympy_extras.polys.cad import CAD, cylindrical_algebraic_decomposition
 
 from sympy_extras_benchmarks.datasets import bath_cad, qepcad_tests, tarski_tests

@@ -29,7 +29,7 @@ from sympy.solvers.ode import checkodesol
 
 from sympy_extras._timeout import attempt
 from sympy_extras._typing import as_expr
-from sympy_extras.solvers import solve_ode
+from sympy_extras.solvers.ode import solve_ode
 
 from sympy_extras_benchmarks.datasets.maxima_ode import load
 from sympy_extras_benchmarks.parsers.maxima import x, y

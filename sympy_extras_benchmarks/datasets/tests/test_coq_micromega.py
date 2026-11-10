@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from sympy import And, Eq, Implies, Ne, Or, S, Symbol
 
-from sympy_extras.assumptions import Exists, ForAll
+from sympy_extras.assumptions.quantifiers_sympy import Exists, ForAll
 
 from sympy_extras_benchmarks.datasets.coq_micromega import goals
 from sympy_extras_benchmarks.parsers.rocq import CoqGoal

@@ -43,7 +43,10 @@ from sympy.core.basic import Basic
 from sympy.core.relational import Relational
 from sympy.logic.boolalg import Boolean
 
-from sympy_extras.assumptions import Exists, satisfiable, simplify, refine, resolve
+from sympy_extras.assumptions.quantifiers_sympy import Exists
+from sympy_extras.assumptions.sat import satisfiable
+from sympy_extras.assumptions.refine import simplify, refine
+from sympy_extras.assumptions.resolve import resolve
 from sympy_extras._timeout import TimeLimitExceeded, time_limit
 from sympy_extras._typing import as_boolean
 

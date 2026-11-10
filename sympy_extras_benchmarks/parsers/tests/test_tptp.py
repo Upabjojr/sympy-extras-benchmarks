@@ -6,7 +6,7 @@ from typing import Optional
 
 from sympy import Implies, Ne, S, Symbol
 
-from sympy_extras.assumptions import ForAll
+from sympy_extras.assumptions.quantifiers_sympy import ForAll
 
 from sympy_extras_benchmarks.parsers.tptp import TPTPProblem, problem
 

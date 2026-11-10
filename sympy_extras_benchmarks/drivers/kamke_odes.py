@@ -37,7 +37,9 @@ from sympy.core.numbers import Rational
 
 from sympy_extras._timeout import attempt
 from sympy_extras.settings import configure
-from sympy_extras.solvers import dsolve_lie, dsolve_linear, dsolve_first_order
+from sympy_extras.solvers.ode import dsolve_lie
+from sympy_extras.solvers.linear_ode import dsolve_linear
+from sympy_extras.solvers.first_order import dsolve_first_order
 
 from sympy_extras_benchmarks.datasets.maxima_ode import ODEEntry, load
 from sympy_extras_benchmarks.parsers.maxima import x, y
