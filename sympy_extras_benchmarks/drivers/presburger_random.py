@@ -46,7 +46,7 @@ from sympy import And, Eq, Integer, Ne, Or, S, Symbol, false, true
 from sympy.logic.boolalg import Boolean
 
 from sympy_extras.assumptions.quantifiers_sympy import Exists, ForAll
-from sympy_extras.assumptions.resolve import resolve
+from sympy_extras.assumptions.resolve_sympy import resolve
 from sympy_extras._timeout import attempt
 from sympy_extras._typing import as_boolean
 

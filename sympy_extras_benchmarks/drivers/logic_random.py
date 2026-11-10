@@ -1,5 +1,5 @@
 """Random check of the refinement and simplification of logical
-expressions (``sympy_extras.assumptions.refine``, ``simplify``, ``ask``,
+expressions (``sympy_extras.assumptions.refine_sympy``, ``simplify``, ``ask``,
 ``tautology``, ``satisfiable``) against independent evaluation.
 
 Usage::
@@ -37,8 +37,8 @@ from sympy.logic.boolalg import Boolean
 
 from sympy_extras._typing import as_boolean, as_expr
 
-from sympy_extras.assumptions.ask import ask
-from sympy_extras.assumptions.refine import refine, simplify
+from sympy_extras.assumptions.ask_sympy import ask
+from sympy_extras.assumptions.refine_sympy import refine, simplify
 from sympy_extras.assumptions.sat import satisfiable, tautology
 from sympy_extras._timeout import attempt
 
