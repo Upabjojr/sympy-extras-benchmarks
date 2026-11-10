@@ -35,7 +35,7 @@ from sympy import S, Symbol, Tuple, simplify
 from sympy.core.basic import Basic
 from sympy.sets.sets import FiniteSet
 
-from sympy_extras.assumptions.solve import solve
+from sympy_extras.assumptions.solve_sympy import solve
 from sympy_extras._timeout import attempt
 
 from sympy_extras_benchmarks.datasets.polynomial_solving import PolynomialSystem, load
