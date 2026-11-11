@@ -44,7 +44,7 @@ from sympy.logic.boolalg import Boolean
 
 from sympy_extras.assumptions.resolve_sympy import resolve
 from sympy_extras.assumptions.sat_sympy import satisfiable
-from sympy_extras.polys.cad import CAD, cylindrical_algebraic_decomposition
+from sympy_extras.polys.cad.lifting_sympy import CAD, cylindrical_algebraic_decomposition
 
 from sympy_extras_benchmarks.datasets import bath_cad, qepcad_tests, tarski_tests
 from sympy_extras_benchmarks.datasets.cad_collections import Example

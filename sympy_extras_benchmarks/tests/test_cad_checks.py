@@ -6,7 +6,7 @@ import random
 
 from sympy import symbols
 
-from sympy_extras.polys.cad import cylindrical_algebraic_decomposition
+from sympy_extras.polys.cad.lifting_sympy import cylindrical_algebraic_decomposition
 from sympy_extras_benchmarks.drivers.cad_examples import check_cells
 
 x, y = symbols('x y')
