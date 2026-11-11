@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sympy import groebner, QQ, Poly
 
-from sympy_extras.polys.ideals import Ideal
+from sympy_extras.polys.ideals_sympy import Ideal
 
 from sympy_extras_benchmarks.datasets.polynomial_systems import katsura, cyclic, SYSTEMS
 
