@@ -46,7 +46,7 @@ from sympy.core.singleton import S
 from sympy.logic.boolalg import Boolean
 from sympy.parsing.sympy_parser import parse_expr
 
-from sympy_extras._typing import as_boolean, as_expr
+from sympy_extras._typing_sympy import as_boolean, as_expr
 
 __all__ = ['SyntaxRefused', 'balanced', 'bars_to_abs', 'expression', 'proposition',
            'representable', 'split_top']

@@ -43,7 +43,7 @@ from sympy.core.expr import Expr
 from sympy.logic.boolalg import Boolean
 
 from sympy_extras._timeout import TimeLimitExceeded, time_limit
-from sympy_extras._typing import as_boolean, as_expr
+from sympy_extras._typing_sympy import as_boolean, as_expr
 from sympy_extras.integrals.regions import IntegralByRanges, integrate_by_ranges
 
 from sympy_extras_benchmarks.runner import Result, Task, run

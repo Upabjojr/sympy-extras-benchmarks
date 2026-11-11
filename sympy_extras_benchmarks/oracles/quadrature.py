@@ -42,7 +42,7 @@ from sympy import Integer, Integral, Rational, S, Symbol, lambdify, oo, zoo
 from sympy.core.evalf import PrecisionExhausted
 from sympy.core.expr import Expr
 
-from sympy_extras._typing import as_expr
+from sympy_extras._typing_sympy import as_expr
 
 from sympy_extras_benchmarks.datasets.integrals import DefiniteIntegral
 

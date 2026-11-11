@@ -47,7 +47,7 @@ from sympy import S, symbols
 from sympy.core.expr import Expr
 from sympy.core.symbol import Symbol
 
-from sympy_extras._typing import as_expr
+from sympy_extras._typing_sympy import as_expr
 
 __all__ = ['PolynomialSystem', 'katsura', 'cyclic', 'SYSTEMS']
 

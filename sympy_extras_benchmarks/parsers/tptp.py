@@ -55,7 +55,7 @@ from sympy.logic.boolalg import Boolean
 from sympy.sets.sets import Set
 
 from sympy_extras.assumptions.quantifiers_sympy import Exists, ForAll
-from sympy_extras._typing import as_boolean, as_expr
+from sympy_extras._typing_sympy import as_boolean, as_expr
 
 __all__ = ['TPTPProblem', 'TPTPError', 'TYPES', 'REFUSED_TYPES', 'STATUS', 'problem']
 

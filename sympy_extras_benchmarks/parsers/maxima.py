@@ -69,7 +69,7 @@ from sympy.core.function import AppliedUndef, UndefinedFunction
 from sympy.functions.elementary.complexes import re as real_part
 from sympy.logic.boolalg import Boolean
 
-from sympy_extras._typing import as_boolean, as_expr
+from sympy_extras._typing_sympy import as_boolean, as_expr
 
 __all__ = ['MaximaSyntaxError', 'FUNCTIONS', 'NO_FUNCTION', 'Token', 'x', 'y', 'tokenize',
            'parse_expression', 'parse_equation', 'derivative_order', 'undefined_function',

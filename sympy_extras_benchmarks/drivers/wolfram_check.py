@@ -40,7 +40,7 @@ from sympy.core.basic import Basic
 from sympy.logic.boolalg import Boolean, Equivalent, Implies
 
 from sympy_extras.assumptions.quantifiers_sympy import Exists, ForAll
-from sympy_extras._typing import as_boolean
+from sympy_extras._typing_sympy import as_boolean
 
 from sympy_extras_benchmarks.datasets import solver_regressions, tarski_tests
 from sympy_extras_benchmarks.parsers.smtlib import translate

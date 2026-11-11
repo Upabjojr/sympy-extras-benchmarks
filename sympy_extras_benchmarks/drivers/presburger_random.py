@@ -48,7 +48,7 @@ from sympy.logic.boolalg import Boolean
 from sympy_extras.assumptions.quantifiers_sympy import Exists, ForAll
 from sympy_extras.assumptions.resolve_sympy import resolve
 from sympy_extras._timeout import attempt
-from sympy_extras._typing import as_boolean
+from sympy_extras._typing_sympy import as_boolean
 
 __all__ = ['brute_force', 'main', 'random_formula']
 

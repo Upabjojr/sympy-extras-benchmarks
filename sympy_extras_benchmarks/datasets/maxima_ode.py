@@ -71,7 +71,7 @@ from sympy import Symbol
 from sympy.core.expr import Expr
 from sympy.core.function import AppliedUndef, UndefinedFunction
 
-from sympy_extras._typing import as_expr
+from sympy_extras._typing_sympy import as_expr
 
 from sympy_extras_benchmarks.cache import bundled, cache_directory
 from sympy_extras_benchmarks.parsers.maxima import (

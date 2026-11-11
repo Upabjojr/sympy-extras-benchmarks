@@ -37,7 +37,7 @@ from sympy import Function, symbols, exp, sin, log, Rational
 from sympy.core.expr import Expr
 from sympy.core.function import AppliedUndef
 
-from sympy_extras._typing import as_expr
+from sympy_extras._typing_sympy import as_expr
 
 __all__ = ['PDEEntry', 'TABLE', 'x', 't', 'u']
 

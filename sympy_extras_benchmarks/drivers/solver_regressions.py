@@ -48,7 +48,7 @@ from sympy_extras.assumptions.quantifiers_sympy import Exists
 from sympy_extras.assumptions.resolve_sympy import resolve
 from sympy_extras.assumptions.sat_sympy import satisfiable
 from sympy_extras._timeout import attempt
-from sympy_extras._typing import as_boolean
+from sympy_extras._typing_sympy import as_boolean
 
 from sympy_extras_benchmarks.datasets.solver_regressions import load, translate
 from sympy_extras_benchmarks.parsers.smtlib import ArithProblem

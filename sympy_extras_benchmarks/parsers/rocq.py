@@ -34,7 +34,7 @@ from sympy.logic.boolalg import Boolean
 from sympy.sets.sets import Set
 
 from sympy_extras.assumptions.quantifiers_sympy import Exists, ForAll
-from sympy_extras._typing import as_boolean
+from sympy_extras._typing_sympy import as_boolean
 
 from sympy_extras_benchmarks.parsers.prover import (
     IDENTIFIER, SyntaxRefused, balanced, proposition, split_top)

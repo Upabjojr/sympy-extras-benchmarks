@@ -6,7 +6,7 @@ import random
 from sympy import I, S, Symbol, besselk, cos, exp, log, meijerg, sin, sqrt
 from sympy.logic.boolalg import Boolean
 
-from sympy_extras._typing import as_boolean, as_expr
+from sympy_extras._typing_sympy import as_boolean, as_expr
 
 from sympy_extras_benchmarks.datasets.indefinite_integrals import IndefiniteIntegral
 from sympy_extras_benchmarks.drivers.indefinite_integrals import check, verify

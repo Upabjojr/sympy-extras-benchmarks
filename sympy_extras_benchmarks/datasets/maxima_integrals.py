@@ -91,7 +91,7 @@ from sympy import Gt, Symbol, exp, oo
 from sympy.core.expr import Expr
 from sympy.logic.boolalg import Boolean
 
-from sympy_extras._typing import as_boolean, as_expr
+from sympy_extras._typing_sympy import as_boolean, as_expr
 
 from sympy_extras_benchmarks.cache import cache_directory
 from sympy_extras_benchmarks.datasets.integrals import PROPERTIES, DefiniteIntegral

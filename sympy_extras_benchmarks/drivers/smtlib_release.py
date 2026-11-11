@@ -48,7 +48,7 @@ from sympy_extras.assumptions.sat_sympy import satisfiable
 from sympy_extras.assumptions.refine_sympy import simplify, refine
 from sympy_extras.assumptions.resolve_sympy import resolve
 from sympy_extras._timeout import TimeLimitExceeded, time_limit
-from sympy_extras._typing import as_boolean
+from sympy_extras._typing_sympy import as_boolean
 
 from sympy_extras_benchmarks.datasets import solver_regressions, tarski_tests
 from sympy_extras_benchmarks.parsers.smtlib import ArithProblem, Problem, translate

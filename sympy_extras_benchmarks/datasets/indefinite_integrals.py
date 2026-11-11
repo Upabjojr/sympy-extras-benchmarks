@@ -80,7 +80,7 @@ from sympy import Gt, Integral, Symbol, sympify
 from sympy.core.expr import Expr
 from sympy.logic.boolalg import Boolean
 
-from sympy_extras._typing import as_boolean, as_expr
+from sympy_extras._typing_sympy import as_boolean, as_expr
 
 from sympy_extras_benchmarks.datasets import fricas_integrals
 from sympy_extras_benchmarks.datasets.maxima_integrals import (
