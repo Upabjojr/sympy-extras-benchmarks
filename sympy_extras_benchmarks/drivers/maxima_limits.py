@@ -36,7 +36,7 @@ from typing import Optional
 from sympy import Basic, Limit, Symbol, nan, oo, simplify, zoo
 from sympy.core.expr import Expr
 
-from sympy_extras.assumptions.limits import limit
+from sympy_extras.assumptions.limits_sympy import limit
 from sympy_extras._timeout import attempt
 
 from sympy_extras_benchmarks.datasets.maxima_limits import MaximaLimit, load
