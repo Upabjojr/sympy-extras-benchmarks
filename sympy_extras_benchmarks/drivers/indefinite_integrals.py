@@ -86,7 +86,7 @@ from sympy.utilities.lambdify import lambdify
 
 from sympy_extras._timeout import TimeLimitExceeded, attempt, time_limit
 from sympy_extras._typing import as_expr
-from sympy_extras.integrals.conditions import sample_values
+from sympy_extras.integrals.conditions_sympy import sample_values
 
 from sympy_extras_benchmarks.datasets import indefinite_integrals
 from sympy_extras_benchmarks.datasets.indefinite_integrals import IndefiniteIntegral

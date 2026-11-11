@@ -24,7 +24,7 @@ import time
 from typing import Optional
 
 from sympy_extras._timeout import attempt
-from sympy_extras.polys.groebnerwalk import groebner_walk
+from sympy_extras.polys.groebnerwalk_sympy import groebner_walk
 from sympy_extras.polys.ideals_sympy import Ideal
 
 from sympy_extras_benchmarks.datasets.polynomial_systems import SYSTEMS, PolynomialSystem

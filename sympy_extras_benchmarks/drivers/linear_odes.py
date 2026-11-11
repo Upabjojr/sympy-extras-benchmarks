@@ -33,7 +33,7 @@ from sympy.solvers.ode import checkodesol
 
 from sympy_extras._timeout import attempt
 from sympy_extras.settings import configure
-from sympy_extras.solvers.linear_ode import LinearOperator, dsolve_linear
+from sympy_extras.solvers.linear_ode_sympy import LinearOperator, dsolve_linear
 
 from sympy_extras_benchmarks.datasets.maxima_ode import ODEEntry, load
 from sympy_extras_benchmarks.parsers.maxima import x, y

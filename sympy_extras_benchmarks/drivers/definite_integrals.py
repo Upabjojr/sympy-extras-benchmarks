@@ -13,7 +13,7 @@ This driver measures SymPy's ``integrate``, which sympy-extras builds on:
 its default algorithm, or with ``--meijerg`` the Meijer G-function method
 alone — the method of REDUCE's DEFINT and of Maxima's ``specint``, whose
 tests are two of the datasets — and with ``--extras`` the definite
-integrator of sympy-extras (``sympy_extras.integrals.definite_integral``,
+integrator of sympy-extras (``sympy_extras.integrals.definite.definite_integral``,
 the Marichev–Adamchik method with the facts of the source as assumptions,
 SymPy's ``integrate`` as its last resort).
 
@@ -71,7 +71,7 @@ from sympy.logic.boolalg import Boolean
 from sympy_extras._timeout import attempt
 from sympy_extras._typing import as_boolean, as_expr
 from sympy_extras.assumptions.facts_sympy import element
-from sympy_extras.integrals import definite_integral
+from sympy_extras.integrals.definite import definite_integral
 
 from sympy_extras_benchmarks.datasets import (
     fricas_integrals, holpy_integrals, maxima_integrals, reduce_defint)

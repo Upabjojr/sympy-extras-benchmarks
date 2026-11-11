@@ -1,4 +1,4 @@
-"""``integrate_by_ranges`` of ``sympy_extras.integrals`` on random regions,
+"""``integrate_by_ranges`` of ``sympy_extras.integrals.regions`` on random regions,
 checked in four ways which do not use the decomposition.
 
 Usage::
@@ -44,7 +44,7 @@ from sympy.logic.boolalg import Boolean
 
 from sympy_extras._timeout import TimeLimitExceeded, time_limit
 from sympy_extras._typing import as_boolean, as_expr
-from sympy_extras.integrals import IntegralByRanges, integrate_by_ranges
+from sympy_extras.integrals.regions import IntegralByRanges, integrate_by_ranges
 
 from sympy_extras_benchmarks.runner import Result, Task, run
 
