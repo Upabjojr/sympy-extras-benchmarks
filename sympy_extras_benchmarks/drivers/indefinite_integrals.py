@@ -10,7 +10,7 @@ Usage::
 This driver measures SymPy's ``integrate(f, x)`` or, with ``--extras``,
 the indefinite integrator of sympy-extras
 (``sympy_extras.integrals.indefinite.indefinite_integral`` when the
-package has it, else ``sympy_extras.integrals.antiderivative.antiderivative``,
+package has it, else ``sympy_extras.integrals.antiderivative_sympy.antiderivative``,
 the antiderivative behind its definite integrator: the Risch port, Trager's
 algorithm, the radical table, SymPy as the last resort).
 
@@ -119,7 +119,7 @@ def _extras(integrand: Expr, variable: Symbol, facts: list[Boolean]) -> Optional
     try:
         from sympy_extras.integrals.indefinite import indefinite_integral
     except ImportError:
-        from sympy_extras.integrals.antiderivative import antiderivative
+        from sympy_extras.integrals.antiderivative_sympy import antiderivative
         return antiderivative(integrand, variable)
     return as_expr(indefinite_integral(integrand, variable, facts))
 
